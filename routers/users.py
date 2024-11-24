@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 
 from database.orm import AsyncOrm
 from database.schemas import UserAdd
+from routers import messages as ms
 
 router = Router()
 
@@ -31,3 +32,19 @@ async def start_handler(message: types.Message) -> None:
     # уже зарегистрирован
     except IntegrityError:
         await message.answer("Вы уже зарегистрированы")
+
+
+@router.message(Command("status"))
+async def start_handler(message: types.Message) -> None:
+    """Проверка статуса подписки"""
+    tg_id = str(message.from_user.id)
+    user = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
+    msg = ms.get_status_message(user)
+    await message.answer(msg)
+
+
+@router.message(Command("help"))
+async def help_handler(message: types.Message) -> None:
+    """Help message"""
+    msg = ms.get_help_message()
+    await message.answer(msg)

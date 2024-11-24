@@ -43,5 +43,18 @@ class AsyncOrm:
             await session.flush()
             await session.commit()
 
+    @staticmethod
+    async def get_user_with_subscription_by_tg_id(tg_id: str) -> schemas.UserRel:
+        """Получение подписки и связанного пользователя по tg id"""
+        async with async_session_factory() as session:
+            query = select(tables.User)\
+                .where(tables.User.tg_id == tg_id)\
+                .options(joinedload(tables.User.subscription))
+
+            result = await session.execute(query)
+            row = result.scalars().first()
+            user = schemas.UserRel.model_validate(row, from_attributes=True)
+
+            return user
 
 
