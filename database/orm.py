@@ -1,6 +1,7 @@
 import datetime
 from typing import List
 
+import pytz
 from sqlalchemy import select, delete, update, text, and_
 from sqlalchemy.orm import joinedload, selectinload
 
@@ -33,6 +34,20 @@ class AsyncOrm:
             return user_id
 
     @staticmethod
+    async def get_user_by_tg_id(tg_id: str) -> schemas.User | None:
+        """Получение пользователя по tg id"""
+        async with async_session_factory() as session:
+            query = select(tables.User).where(tables.User.tg_id == tg_id)
+
+            result = await session.execute(query)
+            row = result.scalars().first()
+            if row:
+                user = schemas.User.model_validate(row, from_attributes=True)
+                return user
+            else:
+                return
+
+    @staticmethod
     async def create_subscription(user_id: int) -> None:
         """Создание подписки пользователю"""
         async with async_session_factory() as session:
@@ -56,5 +71,32 @@ class AsyncOrm:
             user = schemas.UserRel.model_validate(row, from_attributes=True)
 
             return user
+
+    @staticmethod
+    async def update_cancel_subscribe(subscription_id: int) -> None:
+        """Отмена подписки"""
+        async with async_session_factory() as session:
+            query = update(tables.Subscription)\
+                .where(tables.Subscription.id == subscription_id)\
+                .values(active=False)
+
+            await session.execute(query)
+            await session.flush()
+            await session.commit()
+
+    @staticmethod
+    async def update_subscribe(subscription_id: int) -> None:
+        """Оформление подписки"""
+        async with async_session_factory() as session:
+            start_date = (datetime.datetime.now(tz=pytz.timezone("Europe/Moscow"))).date()
+            expire_date = (datetime.datetime.now(tz=pytz.timezone("Europe/Moscow")) + datetime.timedelta(days=30)).date()
+
+            query = update(tables.Subscription) \
+                .where(tables.Subscription.id == subscription_id) \
+                .values(active=True, start_date=start_date, expire_date=expire_date)
+
+            await session.execute(query)
+            await session.flush()
+            await session.commit()
 
 

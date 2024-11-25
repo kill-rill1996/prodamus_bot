@@ -15,3 +15,10 @@ def subscription_keyboard(is_active: bool) -> InlineKeyboardBuilder:
 
     keyboard.adjust(1)
     return keyboard
+
+
+def invite_link_keyboard(link: str) -> InlineKeyboardBuilder:
+    """Клавиатура со ссылкой на вступление в канал"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text="🔗 Вступить в канал", url=link))
+    return keyboard
