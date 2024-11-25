@@ -1,18 +1,30 @@
+import datetime
+
 from database.schemas import UserRel
 from routers.utils import convert_date
+from settings import settings
 
 
-def get_status_message(user_with_sub: UserRel) -> str:
+def get_welcome_message() -> str:
+    """Приветственное сообщение"""
+    message = f"👋 Добро пожаловать!\n\n" \
+               f"💫 Этот бот управляет подпиской на закрытый канал.\n\n" \
+               f"💰 Стоимость: {settings.price} руб/месяц\n" \
+               f"♾️ Тип подписки: Автопродление"
+    return message
+
+
+def get_status_message(is_active: bool, expire_date: datetime.datetime) -> str:
     """Status message"""
-    subscription = user_with_sub.subscription[0]
-    if subscription.active:
+    if is_active:
         message = "✅ Ваша подписка активна\n\n"
-        expire_date = convert_date(subscription.expire_date)
-        message += f"Срок следующего списания <b>{expire_date}</b>\n" \
-                   f"Для отмены подписки нажмите кнопку отменить"
+        converted_expire_date = convert_date(expire_date)
+        message += f"Срок следующего списания <b>{converted_expire_date}</b>\n" \
+                   f"Для отмены подписки нажмите кнопку \"Отменить подписку\""
 
     else:
-        message = "❌ Ваша подписка неактивна"
+        message = "❌ Ваша подписка неактивна\n\n" \
+                  "Для оформления подписки нажмите кнопку \"Оформить подписку\""
 
     return message
 

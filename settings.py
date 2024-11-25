@@ -18,6 +18,8 @@ class Database(BaseSettings):
 class Settings(BaseSettings):
     bot_token: str
     admins: list
+    channel_id: str
+    price: int = 50
 
     db: Database = Database()
 
