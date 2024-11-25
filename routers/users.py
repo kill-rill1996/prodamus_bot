@@ -22,8 +22,13 @@ async def start_handler(message: types.Message) -> None:
 
     # уже зарегистрирован
     if user:
-        msg += "\n\nВы можете проверить статус подписки с помощью команды /status"
-        await message.answer(msg)
+        user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
+        if user_with_sub.subscription[0].active:
+            msg += "\n\nВы можете проверить статус подписки с помощью команды /status"
+            await message.answer(msg)
+        else:
+            msg += "\n\nНажмите кнопку ниже для оформления подписки"
+            await message.answer(msg, reply_markup=kb.subscription_keyboard(is_active=False).as_markup())
 
     # регистрация
     else:
