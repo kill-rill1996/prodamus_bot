@@ -17,3 +17,9 @@ async def generate_invite_link(bot: aiogram.Bot, name: str) -> str:
                                                     expire_date=int(expire_date.timestamp()),
                                                     member_limit=1)
     return invite_link.invite_link
+
+
+async def kick_user_from_channel(user_tg_id: int, bot: aiogram.Bot):
+    """Удаление пользователя из канала"""
+    await bot.ban_chat_member(settings.channel_id, user_tg_id)
+    await bot.unban_chat_member(settings.channel_id, user_tg_id)

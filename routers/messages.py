@@ -29,6 +29,14 @@ def get_status_message(is_active: bool, expire_date: datetime.datetime) -> str:
     return message
 
 
+def get_cancel_subscribe_message() -> str:
+    """Сообщение об отмене подписки"""
+    message = "⚠️ Ваша подписка отменена\n\n" \
+              "Доступ к каналу будет прекращён в течение 24 часов.\n" \
+              "Вы всегда можете оформить подписку заново с помощью команды /status"
+    return message
+
+
 def get_help_message() -> str:
     """Help message"""
     # TODO переделать
