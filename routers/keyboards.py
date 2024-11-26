@@ -19,6 +19,11 @@ def subscription_keyboard(is_active: bool) -> InlineKeyboardBuilder:
 
 def payment_keyboard(payment_link: str) -> InlineKeyboardBuilder:
     """Клавиатура со ссылкой на оплату"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text="💵 Ссылка на оплату", url=payment_link))
+
+    return keyboard
+
 
 def invite_link_keyboard(link: str) -> InlineKeyboardBuilder:
     """Клавиатура со ссылкой на вступление в канал"""

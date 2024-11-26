@@ -99,4 +99,16 @@ class AsyncOrm:
             await session.flush()
             await session.commit()
 
+    @staticmethod
+    async def get_subscription(subscription_id: int) -> schemas.Subscription | None:
+        """Оформление подписки"""
+        async with async_session_factory() as session:
+            query = select(tables.Subscription).where(tables.Subscription.id == subscription_id)
 
+            result = await session.execute(query)
+            row = result.scalars().first()
+            if row:
+                subscription = schemas.Subscription.model_validate(row, from_attributes=True)
+                return subscription
+            else:
+                return

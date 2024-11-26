@@ -1,3 +1,5 @@
+from asyncio import sleep
+
 import aiogram
 from aiogram import Router, types, Bot
 from aiogram.filters import Command
@@ -16,14 +18,6 @@ router = Router()
 @router.message(Command("start"))
 async def start_handler(message: types.Message) -> None:
     """Старт бота и регистрация пользователя"""
-    # создание пользователя
-    new_user = UserAdd(
-        tg_id=str(message.from_user.id),
-        username=message.from_user.username,
-        firstname=message.from_user.first_name,
-        lastname=message.from_user.last_name,
-    )
-
     # проверка наличия пользователя
     tg_id = str(message.from_user.id)
     user = await AsyncOrm.get_user_by_tg_id(tg_id)
@@ -46,7 +40,8 @@ async def start_handler(message: types.Message) -> None:
             tg_id=str(message.from_user.id),
             username=message.from_user.username,
             firstname=message.from_user.first_name,
-            lastname=message.from_user.last_name
+            lastname=message.from_user.last_name,
+            # phone=None
         )
         user_id = await AsyncOrm.create_user(new_user)
 
@@ -69,13 +64,43 @@ async def start_handler(message: types.Message) -> None:
 
 
 @router.callback_query(lambda c: c.data == "subscribe")
-async def create_subscription_handler(callback: types.CallbackQuery) -> None:
+async def create_subscription_handler(callback: types.CallbackQuery, bot: Bot) -> None:
     """Оформление подписки"""
     payment_link = prodamus.get_pay_link(callback.from_user.id)
+    user = await AsyncOrm.get_user_with_subscription_by_tg_id(str(callback.from_user.id))
 
     await callback.message.answer(
         "Для оформления подписки оплатите по ссылке ниже",
-        reply_markup=
+        reply_markup=kb.payment_keyboard(payment_link).as_markup()
+    )
+
+    subscription_id = user.subscription[0].id
+    success_pay = await check_payment_status(subscription_id)
+    if success_pay:
+        name = callback.message.from_user.username if callback.message.from_user.username else callback.message.from_user.first_name
+        invite_link = await generate_invite_link(bot, name)
+
+        await callback.message.answer(
+            "Ссылка на вступление в канал",
+            reply_markup=kb.invite_link_keyboard(invite_link).as_markup()
+        )
+
+
+async def check_payment_status(sub_id: int):
+    """Проверка обновления"""
+    while True:
+        subscription = await AsyncOrm.get_subscription(sub_id)
+        if subscription.active:
+            return True
+        else:
+            await sleep(1)
+
+
+@router.callback_query(lambda c: c.data == "payment_processing")
+async def payment_processing_handler(callback: types.CallbackQuery) -> None:
+    """Сообщение пока пользователь делает оплату"""
+    await callback.message.answer(
+        "Дождитесь подтверждения оплаты",
     )
 
 
