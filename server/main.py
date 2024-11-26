@@ -12,15 +12,12 @@ async def root():
 
 @app.post("/")
 async def body(request: Request):
-    try:
-        request_body = await request.json()
-        print(f"REQUEST BODY: {request_body}\n")
-    except:
-        print("Получить json() из body не получлось\n")
+    print(f"Запрос от {request.url}\n")
+
+    body = await request.body()
+    print(f"BODY {body.decode()}\n")
 
     print(f"HEADERS: {request.headers}\n")
-
-    print(f"REQUEST BODY: {request.body()}\n")
 
     try:
         received_sign = request.headers["Sign"] #'sign': 'a543ce34b6b44f1fb7489e2af616952fa0197a0af685e79e16f9101b8a6ec4e6'
@@ -28,13 +25,13 @@ async def body(request: Request):
     except:
         print(f"Не получилось получить SIGN\n")
 
-    prodamus = ProdamusPy("API KEY")
+    prodamus = ProdamusPy("aaf95a836e6c3c03c30dbca198ec807166097659509246d14db70564960839a3")
     try:
         bodyDict = prodamus.parse(body.decode())
         print(f"DECODED BODY: {bodyDict}")
 
         try:
-            signIsGood = prodamus.verify(bodyDict, request.headers["Sign"])
+            signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
             print(f"SIGN RESULT: {signIsGood}")
         except:
             print(f"Не получилось выполнить prodamus.verify(bodyDict, received_sign)")

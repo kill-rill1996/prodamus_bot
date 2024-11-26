@@ -27,6 +27,7 @@ class User(Base):
     username: Mapped[str] = mapped_column(nullable=True)
     firstname: Mapped[str] = mapped_column(nullable=True)
     lastname: Mapped[str] = mapped_column(nullable=True)
+    phone: Mapped[str] = mapped_column(index=True, nullable=True)
 
     subscription: Mapped[list["Subscription"]] = relationship(
         back_populates="user",

@@ -7,6 +7,7 @@ class UserAdd(BaseModel):
     username: str | None
     firstname: str | None
     lastname: str | None
+    phone: str | None
 
 
 class User(UserAdd):

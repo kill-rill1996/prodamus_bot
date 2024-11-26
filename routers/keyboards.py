@@ -15,3 +15,7 @@ def subscription_keyboard(is_active: bool) -> InlineKeyboardBuilder:
 
     keyboard.adjust(1)
     return keyboard
+
+
+def payment_keyboard(payment_link: str) -> InlineKeyboardBuilder:
+    """Клавиатура со ссылкой на оплату"""
