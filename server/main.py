@@ -1,7 +1,14 @@
-from fastapi import FastAPI, Request, Response
+import json
+from datetime import datetime, timedelta
+
+import pytz
+from fastapi import FastAPI, Request
 from prodamuspy import ProdamusPy
+import requests
 
 from orm import AsyncOrm
+from settings import settings
+from schemas import UserRel
 
 app = FastAPI()
 
@@ -11,16 +18,52 @@ async def root():
     return {"message": "some message"}
 
 
-@app.post("/")
+@app.post("/success_pay")
 async def body(request: Request):
     request_params = await get_body_params(request)
     user = await AsyncOrm.get_user_with_subscription_by_tg_id(request_params["order_num"])
 
     await AsyncOrm.update_subscribe(user.subscription[0].id)
 
+    invite_link = await generate_invite_link(user)
+    await send_message_to_user(int(user.tg_id), invite_link)
+
+
+async def generate_invite_link(user: UserRel) -> str:
+    """Создание ссылка для вступления в канал"""
+    expire_date = datetime.now(tz=pytz.timezone('Europe/Moscow')) + timedelta(days=1)
+    name = user.username if user.username else user.firstname
+    response = requests.post(
+        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "createChatInviteLink"),
+        data={
+            "chat_id": settings.channel_id,
+            "name": name,
+            "expire_date": int(expire_date.timestamp()),
+            "member_limit": 1,
+        }
+    )
+    invite_link = response.json()["result"]["invite_link"]
+    print(invite_link)
+
+    return invite_link
+
+
+async def send_message_to_user(chat_id: int, link: str) -> None:
+    """Отправка сообщения пользователю после оплаты"""
+    response = requests.post(
+        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        data={'chat_id': chat_id,
+              'text': 'hello friend',
+              "reply_markup": json.dumps(
+                  {"inline_keyboard": [[{"text": "🔗Вступить в канал", "url": link}]]},
+                  separators=(',', ':'))
+              }
+    ).json()
+    print(response)
+
 
 async def get_body_params(request: Request) -> dict:
-    prodamus = ProdamusPy("aaf95a836e6c3c03c30dbca198ec807166097659509246d14db70564960839a3")
+    prodamus = ProdamusPy(settings.pay_token)
 
     body = await request.body()
     bodyDict = prodamus.parse(body.decode())
@@ -31,9 +74,9 @@ async def get_body_params(request: Request) -> dict:
     print(signIsGood)
 
     result = {
-        "order_num": bodyDict["order_num"],
+        "order_num": bodyDict["order_num"],  # tg_id: str
         "payment_status": bodyDict["payment_status"],
-        "received_sign": request.headers["Sign"]
+        "sing_is_good": signIsGood,  # bool
     }
 
     return result

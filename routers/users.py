@@ -10,7 +10,7 @@ from database.schemas import UserAdd
 from routers import messages as ms
 from routers import keyboards as kb
 from services import prodamus
-from services.channel import generate_invite_link, kick_user_from_channel
+from services.channel import kick_user_from_channel
 
 router = Router()
 
@@ -64,43 +64,13 @@ async def start_handler(message: types.Message) -> None:
 
 
 @router.callback_query(lambda c: c.data == "subscribe")
-async def create_subscription_handler(callback: types.CallbackQuery, bot: Bot) -> None:
+async def create_subscription_handler(callback: types.CallbackQuery) -> None:
     """Оформление подписки"""
     payment_link = prodamus.get_pay_link(callback.from_user.id)
-    user = await AsyncOrm.get_user_with_subscription_by_tg_id(str(callback.from_user.id))
 
     await callback.message.answer(
-        "Для оформления подписки оплатите по ссылке ниже",
+        "Для оформления подписки оплатите по ссылке ниже\n\n",
         reply_markup=kb.payment_keyboard(payment_link).as_markup()
-    )
-
-    subscription_id = user.subscription[0].id
-    success_pay = await check_payment_status(subscription_id)
-    if success_pay:
-        name = callback.message.from_user.username if callback.message.from_user.username else callback.message.from_user.first_name
-        invite_link = await generate_invite_link(bot, name)
-
-        await callback.message.answer(
-            "Ссылка на вступление в канал",
-            reply_markup=kb.invite_link_keyboard(invite_link).as_markup()
-        )
-
-
-async def check_payment_status(sub_id: int):
-    """Проверка обновления"""
-    while True:
-        subscription = await AsyncOrm.get_subscription(sub_id)
-        if subscription.active:
-            return True
-        else:
-            await sleep(1)
-
-
-@router.callback_query(lambda c: c.data == "payment_processing")
-async def payment_processing_handler(callback: types.CallbackQuery) -> None:
-    """Сообщение пока пользователь делает оплату"""
-    await callback.message.answer(
-        "Дождитесь подтверждения оплаты",
     )
 
 
@@ -122,25 +92,6 @@ async def cancel_subscription_handler(callback: types.CallbackQuery, bot: aiogra
 
     msg = ms.get_cancel_subscribe_message()
     await callback.message.edit_text(msg)
-
-
-@router.callback_query(lambda c: c.data == "subscribe")
-async def create_subscription_handler(callback: types.CallbackQuery, bot: aiogram.Bot) -> None:
-    """Оформление подписки"""
-    tg_id = str(callback.from_user.id)
-
-    # получение подписки
-    user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
-    subscription_id = user_with_sub.subscription[0].id
-
-    # оформление подписки
-    await AsyncOrm.update_subscribe(subscription_id)
-
-    name = callback.message.from_user.username if callback.message.from_user.username else callback.message.from_user.first_name
-    invite_link = await generate_invite_link(bot, name)
-    await callback.message.edit_text("Подписка оформлена\n\n"
-                                  "<b>Ссылка на вступление в канал активна 1 день и может быть использована только 1 раз</b>",
-                                  reply_markup=kb.invite_link_keyboard(invite_link).as_markup())
 
 
 @router.message(Command("help"))
