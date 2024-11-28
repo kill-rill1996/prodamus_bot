@@ -68,7 +68,7 @@ async def create_subscription_handler(callback: types.CallbackQuery) -> None:
     """Оформление подписки"""
     payment_link = prodamus.get_pay_link(callback.from_user.id)
 
-    await callback.message.answer(
+    await callback.message.edit_text(
         "Для оформления подписки оплатите по ссылке ниже\n\n",
         reply_markup=kb.payment_keyboard(payment_link).as_markup()
     )
