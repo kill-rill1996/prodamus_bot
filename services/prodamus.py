@@ -29,25 +29,22 @@ def get_pay_link(tg_id: int) -> str:
 def cancel_sub_by_user(phone: str) -> int:
     """Отмена подписки клиентом, ее невозможно будет уже включить только оформить повторно"""
     url = settings.pay_link + "rest/setActivity/"
-
-    data_str = f"" \
-           f"'subscription' => {settings.sub_number}," \
-           f"\n'customer_phone' => {phone},\n" \
-           f"'active_user' => 0"
-
     prodamus = ProdamusPy(settings.pay_token)
-    body = prodamus.parse(data_str)
-    signature = prodamus.sign(body)
 
-    data_dict = {
-        "subscription": settings.sub_number,
-        "customer_phone": phone,
-        "active_user": 0,
-        "signature": signature
-    }
+    data = {"subscription": settings.sub_number, "customer_phone": f"+79679185044", "active_user": 0}
+    signature = prodamus.sign(data)
+    print(signature)
 
-    response = requests.get(url, params=data_dict)
-    print(response)
+    data["signature"] = signature
 
-    return response.status_code
+    post_response = requests.post(url, data=data, params=data)
+    print(post_response.url)
+    print(post_response.status_code)
+    print(post_response.content)
+
+    get_response = requests.get(url, params=data)
+    print(get_response.status_code)
+    print(get_response.content)
+
+    return post_response.status_code
 
