@@ -83,15 +83,18 @@ async def cancel_subscription_handler(callback: types.CallbackQuery, bot: aiogra
     user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
     subscription_id = user_with_sub.subscription[0].id
 
-    # отмена подписки
+    # отмена подписки в БД
     await AsyncOrm.update_cancel_subscribe(subscription_id)
-    # TODO запрос в API Prodamus
-    # TODO TRY
-    # TODO не кикать?
-    await kick_user_from_channel(int(tg_id), bot)
 
-    msg = ms.get_cancel_subscribe_message()
-    await callback.message.edit_text(msg)
+    # отмена подписки через API Prodamus
+    status_code = prodamus.cancel_sub_by_user(user_with_sub.phone)
+    if status_code == 200:
+        msg = ms.get_cancel_subscribe_message()
+        await callback.message.edit_text(msg)
+        # TODO не кикать?
+        await kick_user_from_channel(int(tg_id), bot)
+    else:
+        await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
 
 
 @router.message(Command("help"))
