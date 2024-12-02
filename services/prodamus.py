@@ -1,6 +1,3 @@
-import hashlib
-import json
-import hmac
 from collections.abc import MutableMapping
 
 from prodamuspy import ProdamusPy
@@ -39,29 +36,20 @@ def cancel_sub_by_user(phone: str) -> int:
     """Отмена подписки клиентом, ее невозможно будет уже включить только оформить повторно"""
     url = settings.pay_link + "rest/setActivity/"
 
-    prodamus = ProdamusPy(settings.pay_token)
+    data = {
+        "subscription": settings.sub_number,
+        "customer_phone": phone,
+        "active_user": 0
+    }
 
-    data = {"subscription": settings.sub_number,
-            "customer_phone": "+79679195042",
-            "active_user": 0}
+    signature = sign(data, settings.pay_token)
+    data["signature"] = signature
 
-    signature_1 = prodamus.sign(data)
-    signature_2 = sign(data, settings.pay_token)
+    response = requests.post(url, data=data)
+    print(response.status_code)
+    print(response.content)
 
-    print(signature_1)
-    print(signature_2)
-    data["signature"] = signature_2
-
-    post_response = requests.post(url, data=data)
-    print(post_response.url)
-    print(post_response.status_code)
-    print(post_response.content)
-
-    # get_response = requests.get(url, json=data)
-    # print(get_response.status_code)
-    # print(get_response.content)
-
-    return post_response.status_code
+    return response.status_code
 
 
 def sign(data, secret_key):
@@ -69,13 +57,10 @@ def sign(data, secret_key):
     import hmac
     import json
 
-    # переводим все значения data в string c помощью кастомной функции deep_int_to_string (см ниже)
     deep_int_to_string(data)
 
-    # переводим data в JSON, с сортировкой ключей в алфавитном порядке, без пробелом и экранируем бэкслеши
     data_json = json.dumps(data, sort_keys=True, ensure_ascii=False, separators=(',', ':')).replace("/", "\\/")
 
-    # создаем подпись с помощью библиотеки hmac и возвращаем ее
     return hmac.new(secret_key.encode('utf8'), data_json.encode('utf8'), hashlib.sha256).hexdigest()
 
 

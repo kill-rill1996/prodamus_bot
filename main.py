@@ -6,6 +6,9 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand, BotCommandScopeDefault
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+import apsched
 # from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.database import async_engine
@@ -42,16 +45,13 @@ async def start_bot() -> None:
     dispatcher = io.Dispatcher(storage=storage)
 
     # # SCHEDULER
-    # scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-    #
-    # # оповещение для пользователей
-    # scheduler.add_job(apsched.run_every_day, trigger="cron", year='*', month='*', day="*", hour=9, minute=0,
-    #                   second=0, start_date=datetime.now(), kwargs={"bot": bot})
-    # # проверка мероприятия на минимальное кол-во участников
-    # scheduler.add_job(apsched.run_every_hour, trigger="cron", year='*', month='*', day="*", hour="*", minute="*",
-    #                   second=0, start_date=datetime.now(), kwargs={"bot": bot})
-    #
-    # scheduler.start()
+    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+
+    # проверка неактивных подписок
+    scheduler.add_job(apsched.run_every_day, trigger="cron", year='*', month='*', day="*", hour="*", minute="*",
+                      second=0, start_date=datetime.now(), kwargs={"bot": bot})
+
+    scheduler.start()
 
     dispatcher.include_routers(users.router)
     await init_models()

@@ -79,7 +79,7 @@ async def create_subscription_handler(callback: types.CallbackQuery) -> None:
 
 
 @router.callback_query(lambda c: c.data == "cancel_subscription")
-async def cancel_subscription_handler(callback: types.CallbackQuery, bot: aiogram.Bot) -> None:
+async def cancel_subscription_handler(callback: types.CallbackQuery) -> None:
     """Отмена подписки"""
     tg_id = str(callback.from_user.id)
 
@@ -95,8 +95,6 @@ async def cancel_subscription_handler(callback: types.CallbackQuery, bot: aiogra
 
         msg = ms.get_cancel_subscribe_message()
         await callback.message.edit_text(msg)
-        # TODO не кикать?
-        # await kick_user_from_channel(int(tg_id), bot)
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
 
@@ -108,7 +106,6 @@ async def cancel_sub(message: types.Message) -> None:
 
     msg = ms.get_help_message()
     await message.answer(msg)
-
 
 
 @router.message(Command("help"))

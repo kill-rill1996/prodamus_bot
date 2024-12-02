@@ -23,8 +23,10 @@ async def body(request: Request):
     request_params = await get_body_params(request)
     user = await AsyncOrm.get_user_by_tg_id(request_params["order_num"])
 
-    await AsyncOrm.create_payment(user.id)
+    # await AsyncOrm.create_payment(user.id)
     await AsyncOrm.update_subscribe(user.id)
+    # TODO из ответа записывать номер пользователя в таблицу Users
+    # TODO из ответа заполнять поля start_date, expire_date в таблице Subscriptions
 
     invite_link = await generate_invite_link(user)
     await send_message_to_user(int(user.tg_id), invite_link)

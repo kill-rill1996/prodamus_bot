@@ -2,10 +2,9 @@ import datetime
 from typing import List
 
 import pytz
-from sqlalchemy import select, delete, update, text, and_
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy import select, update
+from sqlalchemy.orm import joinedload
 
-import settings
 from database.database import async_engine, async_session_factory
 from database.tables import Base
 from database import schemas
@@ -114,13 +113,37 @@ class AsyncOrm:
                 return
 
     @staticmethod
-    async def create_payment(user_id: int):
+    async def get_all_users() -> List[schemas.User]:
+        """Получение всех пользователей"""
         async with async_session_factory() as session:
-            payment = tables.Payments(
-                user_id=user_id,
-                date=datetime.datetime.now(tz=pytz.timezone("Europe/Moscow")))
+            query = select(tables.User)
 
-            session.add(payment)
+            result = await session.execute(query)
+            rows = result.scalars().all()
+            users = [schemas.User.model_validate(row, from_attributes=True) for row in rows]
 
-            await session.flush()
-            await session.commit()
+            return users
+
+    @staticmethod
+    async def get_subscription_by_user_id(user_id: int) -> schemas.Subscription:
+        """Получение подписки по id пользователя"""
+        async with async_session_factory() as session:
+            query = select(tables.Subscription).where(tables.Subscription.user_id == user_id)
+
+            result = await session.execute(query)
+            row = result.scalars().first()
+            subscription = schemas.Subscription.model_validate(row, from_attributes=True)
+
+            return subscription
+    #
+    # @staticmethod
+    # async def create_payment(user_id: int):
+    #     async with async_session_factory() as session:
+    #         payment = tables.Payments(
+    #             user_id=user_id,
+    #             date=datetime.datetime.now(tz=pytz.timezone("Europe/Moscow")))
+    #
+    #         session.add(payment)
+    #
+    #         await session.flush()
+    #         await session.commit()
