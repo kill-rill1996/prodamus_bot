@@ -31,7 +31,7 @@ async def start_handler(message: types.Message) -> None:
             await message.answer(msg)
         else:
             msg += "\n\nНажмите кнопку ниже для оформления подписки"
-            await message.answer(msg, reply_markup=kb.subscription_keyboard(is_active=False).as_markup())
+            await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
 
     # регистрация
     else:
@@ -48,7 +48,7 @@ async def start_handler(message: types.Message) -> None:
         # создание неактивной подписки
         await AsyncOrm.create_subscription(user_id)
         msg += "\n\nНажмите кнопку ниже для оформления подписки"
-        await message.answer(msg, reply_markup=kb.subscription_keyboard(is_active=False).as_markup())
+        await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
 
 
 @router.message(Command("status"))
@@ -60,7 +60,11 @@ async def start_handler(message: types.Message) -> None:
     expire_date = user_with_sub.subscription[0].expire_date
 
     msg = ms.get_status_message(is_active, expire_date)
-    await message.answer(msg, reply_markup=kb.subscription_keyboard(is_active).as_markup())
+
+    if not is_active:
+        await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
+    else:
+        await message.answer(msg)
 
 
 @router.callback_query(lambda c: c.data == "subscribe")
@@ -69,7 +73,7 @@ async def create_subscription_handler(callback: types.CallbackQuery) -> None:
     payment_link = prodamus.get_pay_link(callback.from_user.id)
 
     await callback.message.edit_text(
-        "Для оформления подписки оплатите по ссылке ниже\n\n",
+        "Для оформления подписки на месяц оплатите по ссылке ниже\n\n",
         reply_markup=kb.payment_keyboard(payment_link).as_markup()
     )
 
@@ -95,6 +99,16 @@ async def cancel_subscription_handler(callback: types.CallbackQuery, bot: aiogra
         # await kick_user_from_channel(int(tg_id), bot)
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
+
+
+@router.message(Command("test"))
+async def cancel_sub(message: types.Message) -> None:
+    """Cancel sub"""
+    prodamus.cancel_sub_by_user("+79855517159")
+
+    msg = ms.get_help_message()
+    await message.answer(msg)
+
 
 
 @router.message(Command("help"))

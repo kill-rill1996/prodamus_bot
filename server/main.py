@@ -8,7 +8,7 @@ import requests
 
 from orm import AsyncOrm
 from settings import settings
-from schemas import UserRel
+from schemas import UserRel, User
 
 app = FastAPI()
 
@@ -21,15 +21,16 @@ async def root():
 @app.post("/success_pay")
 async def body(request: Request):
     request_params = await get_body_params(request)
-    user = await AsyncOrm.get_user_with_subscription_by_tg_id(request_params["order_num"])
+    user = await AsyncOrm.get_user_by_tg_id(request_params["order_num"])
 
-    await AsyncOrm.update_subscribe(user.subscription[0].id)
+    await AsyncOrm.create_payment(user.id)
+    await AsyncOrm.update_subscribe(user.id)
 
     invite_link = await generate_invite_link(user)
     await send_message_to_user(int(user.tg_id), invite_link)
 
 
-async def generate_invite_link(user: UserRel) -> str:
+async def generate_invite_link(user: User) -> str:
     """Создание ссылка для вступления в канал"""
     expire_date = datetime.now(tz=pytz.timezone('Europe/Moscow')) + timedelta(days=1)
     name = user.username if user.username else user.firstname
@@ -53,7 +54,7 @@ async def send_message_to_user(chat_id: int, link: str) -> None:
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={'chat_id': chat_id,
-              'text': 'hello friend',
+              'text': 'Ваша ссылка на вступление в закрытый канал',
               "reply_markup": json.dumps(
                   {"inline_keyboard": [[{"text": "🔗Вступить в канал", "url": link}]]},
                   separators=(',', ':'))
@@ -78,5 +79,7 @@ async def get_body_params(request: Request) -> dict:
         "payment_status": bodyDict["payment_status"],
         "sing_is_good": signIsGood,  # bool
     }
+
+    print(result)
 
     return result

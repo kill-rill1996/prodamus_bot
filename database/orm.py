@@ -112,3 +112,15 @@ class AsyncOrm:
                 return subscription
             else:
                 return
+
+    @staticmethod
+    async def create_payment(user_id: int):
+        async with async_session_factory() as session:
+            payment = tables.Payments(
+                user_id=user_id,
+                date=datetime.datetime.now(tz=pytz.timezone("Europe/Moscow")))
+
+            session.add(payment)
+
+            await session.flush()
+            await session.commit()
