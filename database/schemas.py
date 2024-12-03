@@ -27,12 +27,6 @@ class Subscription(BaseModel):
 
 class SubscriptionRel(Subscription):
     user: list["User"]
-#
-#
-# class PaymentCreate(BaseModel):
-#     date: datetime.datetime
-#     user_id: int
-#
-#
-# class Payment(PaymentCreate):
-#     id: int
+
+
+

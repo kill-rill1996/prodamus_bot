@@ -29,10 +29,11 @@ class SubscriptionRel(Subscription):
     user: list["User"]
 
 
-# class PaymentCreate(BaseModel):
-#     date: datetime.datetime
-#     user_id: int
-#
-#
-# class Payment(PaymentCreate):
-#     id: int
+class ResponseResult(BaseModel):
+    """Поля из ответа сервера Prodamus"""
+    tg_id: str
+    payment_status: str
+    sing_is_good: bool
+    customer_phone: str
+    date_last_payment: datetime.datetime
+    date_next_payment: datetime.datetime

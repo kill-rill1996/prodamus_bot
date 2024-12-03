@@ -8,7 +8,7 @@ import requests
 
 from orm import AsyncOrm
 from settings import settings
-from schemas import UserRel, User
+from schemas import UserRel, User, ResponseResult
 
 app = FastAPI()
 
@@ -20,16 +20,32 @@ async def root():
 
 @app.post("/success_pay")
 async def body(request: Request):
-    request_params = await get_body_params(request)
-    user = await AsyncOrm.get_user_by_tg_id(request_params["order_num"])
+    response = await get_body_params(request)
 
-    # await AsyncOrm.create_payment(user.id)
-    await AsyncOrm.update_subscribe(user.id)
-    # TODO из ответа записывать номер пользователя в таблицу Users
-    # TODO из ответа заполнять поля start_date, expire_date в таблице Subscriptions
+    # проверка на успешный платеж
+    if not(response.sing_is_good and response.payment_status == "success"):
+        await send_error_message_to_user(int(response.tg_id))
 
-    invite_link = await generate_invite_link(user)
-    await send_message_to_user(int(user.tg_id), invite_link)
+    # успешная оплата
+    else:
+        user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
+        sub_status: bool = user.subscription[0].active
+
+        # обновляем телефон если еще не было
+        if not user.phone:
+            await AsyncOrm.update_user_phone(user.id, response.customer_phone)
+
+        # меняем дату окончания подписки
+        await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
+
+        # если подписка активна и продлилась
+        if sub_status:
+            pass
+
+        # новая подписка
+        else:
+            invite_link = await generate_invite_link(user)
+            await send_invite_link_to_user(int(user.tg_id), invite_link)
 
 
 async def generate_invite_link(user: User) -> str:
@@ -51,7 +67,7 @@ async def generate_invite_link(user: User) -> str:
     return invite_link
 
 
-async def send_message_to_user(chat_id: int, link: str) -> None:
+async def send_invite_link_to_user(chat_id: int, link: str) -> None:
     """Отправка сообщения пользователю после оплаты"""
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
@@ -65,7 +81,17 @@ async def send_message_to_user(chat_id: int, link: str) -> None:
     print(response)
 
 
-async def get_body_params(request: Request) -> dict:
+async def send_error_message_to_user(chat_id: int) -> None:
+    """Оповещение о неуспешной оплате"""
+    response = requests.post(
+        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        data={'chat_id': chat_id,
+              'text': 'Ошибка при выполнении оплаты подписки',
+              }
+    ).json()
+
+
+async def get_body_params(request: Request) -> ResponseResult:
     prodamus = ProdamusPy(settings.pay_token)
 
     body = await request.body()
@@ -76,12 +102,14 @@ async def get_body_params(request: Request) -> dict:
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
     print(signIsGood)
 
-    result = {
-        "order_num": bodyDict["order_num"],  # tg_id: str
-        "payment_status": bodyDict["payment_status"],
-        "sing_is_good": signIsGood,  # bool
-    }
+    result = ResponseResult(
+        tg_id=bodyDict["order_num"],
+        payment_status=bodyDict["payment_status"],
+        sing_is_good=signIsGood,
+        customer_phone=bodyDict["customer_phone"],
+        date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M:%S'),    # '2024-12-26 22:08:59'
+        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S')    # '2024-12-26 22:08:59'
+    )
 
     print(result)
-
     return result

@@ -1,6 +1,5 @@
 from collections.abc import MutableMapping
 
-from prodamuspy import ProdamusPy
 import requests
 from settings import settings
 
@@ -11,22 +10,17 @@ def get_pay_link(tg_id: int) -> str:
 
     data = {
         "order_id": tg_id,
-        # "customer_phone": "79679185021",
-        # "customer_email": "andreev.kirill2023@mail.ru",
-        # "subscription": settings.sub_number,
-        # "subscription_date_start": "2024-11-12 23:00",
-
-        "products[0][name]": "Подписка на 1 мес.",
-        "products[0][price]": 50,
-        "products[0][quantity]": 1,
-
+        "subscription": settings.sub_number,
         "customer_extra": "Информация об оплачиваемой подписке",
         "do": "link",
         "sys": "",
+
+        # "products[0][name]": "Подписка на 1 мес.",
+        # "products[0][price]": 50,
+        # "products[0][quantity]": 1,
     }
 
     response = requests.get(link_form, params=data)
-    print(response)
     payment_link = response.content.decode()
     print(payment_link)
     return payment_link
@@ -46,9 +40,6 @@ def cancel_sub_by_user(phone: str) -> int:
     data["signature"] = signature
 
     response = requests.post(url, data=data)
-    print(response.status_code)
-    print(response.content)
-
     return response.status_code
 
 

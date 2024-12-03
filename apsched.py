@@ -1,12 +1,36 @@
+import datetime
+
 import aiogram
-from aiogram.exceptions import TelegramBadRequest
 from database.orm import AsyncOrm
 from services.channel import kick_user_from_channel
+
+
+async def run_every_hour(bot: aiogram.Bot) -> None:
+    """Выполняется каждый час"""
+    await check_sub_status(bot)
 
 
 async def run_every_day(bot: aiogram.Bot) -> None:
     """Выполняется каждый день"""
     await kick_users_with_not_active_sub(bot)
+
+
+async def check_sub_status(bot: aiogram.Bot) -> None:
+    """Проверяет активна ли подписка"""
+    users = await AsyncOrm.get_all_users()
+
+    for user in users:
+        subscription = await AsyncOrm.get_subscription_by_user_id(user.id)
+        if subscription.active:
+            if subscription.expire_date < datetime.datetime.now():
+                await AsyncOrm.disactivate_subscribe(subscription.id)
+
+                # оповещение пользователя
+                try:
+                    msg = f"Срок подписки истек!\n\nВы можете оформить подписку заново с помощью команды /status"
+                    await bot.send_message(user.tg_id, msg)
+                except:
+                    pass
 
 
 async def kick_users_with_not_active_sub(bot: aiogram.Bot) -> None:
@@ -15,17 +39,15 @@ async def kick_users_with_not_active_sub(bot: aiogram.Bot) -> None:
 
     for user in users:
         subscription = await AsyncOrm.get_subscription_by_user_id(user.id)
-        if subscription.active is False:
+
+        if subscription.expire_date.date() < datetime.datetime.now().date():
             # выгоняем из канала
             try:
                 await kick_user_from_channel(int(user.tg_id), bot)
-            except Exception as e:
-                print(e)
 
-            # уведомляем пользователя
-            try:
+                # уведомляем пользователя
                 msg = f"Вы удалены из канала"
                 await bot.send_message(user.tg_id, msg)
-            except TelegramBadRequest:
-                pass
 
+            except Exception as e:
+                print(e)

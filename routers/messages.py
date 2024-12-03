@@ -19,19 +19,26 @@ def get_status_message(is_active: bool, expire_date: datetime.datetime) -> str:
     if is_active:
         message = "✅ Ваша подписка активна\n\n"
         converted_expire_date = convert_date(expire_date)
-        message += f"Срок следующей оплаты <b>{converted_expire_date}</b>\n"
+        message += f"Дата следующего списания <b>{converted_expire_date}</b>\n"
 
+    # если подписка неактивна
     else:
-        message = "❌ Ваша подписка неактивна\n\n" \
-                  "Для оформления подписки нажмите кнопку \"Оформить подписку\""
+        if expire_date is not None and expire_date.date() >= datetime.datetime.now().date():
+            message = "❌ Ваша подписка отменена\n\n" \
+                      f"Доступ к каналу будет прекращён {convert_date(expire_date)}.\n" \
+                      f"После окончания текущей подписки, вы сможете оформить подписку заново с помощью команды /status"
+
+        else:
+            message = "❌ Ваша подписка неактивна\n\n" \
+                      "Для оформления подписки нажмите кнопку \"Оформить подписку\""
 
     return message
 
 
-def get_cancel_subscribe_message() -> str:
+def get_cancel_subscribe_message(expire_date: datetime.datetime) -> str:
     """Сообщение об отмене подписки"""
     message = "⚠️ Ваша подписка отменена\n\n" \
-              "Доступ к каналу будет прекращён в течение 24 часов.\n" \
+              f"Доступ к каналу будет прекращён {convert_date(expire_date)}.\n" \
               "Вы всегда можете оформить подписку заново с помощью команды /status"
     return message
 

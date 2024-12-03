@@ -1,16 +1,13 @@
-from asyncio import sleep
+import datetime
 
-import aiogram
-from aiogram import Router, types, Bot
+from aiogram import Router, types
 from aiogram.filters import Command
-from sqlalchemy.exc import IntegrityError
 
 from database.orm import AsyncOrm
 from database.schemas import UserAdd
 from routers import messages as ms
 from routers import keyboards as kb
 from services import prodamus
-from services.channel import kick_user_from_channel
 
 router = Router()
 
@@ -26,7 +23,11 @@ async def start_handler(message: types.Message) -> None:
     # уже зарегистрирован
     if user:
         user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
-        if user_with_sub.subscription[0].active:
+
+        if user_with_sub.subscription[0].active or \
+                (user_with_sub.subscription[0].expire_date is not None and
+                 user_with_sub.subscription[0].expire_date.date() >= datetime.datetime.now().date()):
+
             msg += "\n\nВы можете проверить статус подписки с помощью команды /status"
             await message.answer(msg)
         else:
@@ -40,8 +41,7 @@ async def start_handler(message: types.Message) -> None:
             tg_id=str(message.from_user.id),
             username=message.from_user.username,
             firstname=message.from_user.first_name,
-            lastname=message.from_user.last_name,
-            # phone=None
+            lastname=message.from_user.last_name
         )
         user_id = await AsyncOrm.create_user(new_user)
 
@@ -62,9 +62,16 @@ async def start_handler(message: types.Message) -> None:
     msg = ms.get_status_message(is_active, expire_date)
 
     if not is_active:
-        await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
+        # подписка отменена, но срок еще не вышел
+        if expire_date is not None and expire_date.date() >= datetime.datetime.now().date():
+            await message.answer(msg)
+        # подписка отменена и вышел срок = подписка не оформлена
+        else:
+            await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
+
+    # подписка активна
     else:
-        await message.answer(msg)
+        await message.answer(msg, reply_markup=kb.cancel_sub_keyboard().as_markup())
 
 
 @router.callback_query(lambda c: c.data == "subscribe")
@@ -73,7 +80,8 @@ async def create_subscription_handler(callback: types.CallbackQuery) -> None:
     payment_link = prodamus.get_pay_link(callback.from_user.id)
 
     await callback.message.edit_text(
-        "Для оформления подписки на месяц оплатите по ссылке ниже\n\n",
+        "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
+        "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
         reply_markup=kb.payment_keyboard(payment_link).as_markup()
     )
 
@@ -91,21 +99,12 @@ async def cancel_subscription_handler(callback: types.CallbackQuery) -> None:
     status_code = prodamus.cancel_sub_by_user(user_with_sub.phone)
     if status_code == 200:
         # отмена подписки в БД
-        await AsyncOrm.update_cancel_subscribe(subscription_id)
+        await AsyncOrm.disactivate_subscribe(subscription_id)
 
-        msg = ms.get_cancel_subscribe_message()
+        msg = ms.get_cancel_subscribe_message(user_with_sub.subscription[0].expire_date)
         await callback.message.edit_text(msg)
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
-
-
-@router.message(Command("test"))
-async def cancel_sub(message: types.Message) -> None:
-    """Cancel sub"""
-    prodamus.cancel_sub_by_user("+79855517159")
-
-    msg = ms.get_help_message()
-    await message.answer(msg)
 
 
 @router.message(Command("help"))

@@ -72,7 +72,7 @@ class AsyncOrm:
             return user
 
     @staticmethod
-    async def update_cancel_subscribe(subscription_id: int) -> None:
+    async def disactivate_subscribe(subscription_id: int) -> None:
         """Отмена подписки"""
         async with async_session_factory() as session:
             query = update(tables.Subscription)\
@@ -135,15 +135,3 @@ class AsyncOrm:
             subscription = schemas.Subscription.model_validate(row, from_attributes=True)
 
             return subscription
-    #
-    # @staticmethod
-    # async def create_payment(user_id: int):
-    #     async with async_session_factory() as session:
-    #         payment = tables.Payments(
-    #             user_id=user_id,
-    #             date=datetime.datetime.now(tz=pytz.timezone("Europe/Moscow")))
-    #
-    #         session.add(payment)
-    #
-    #         await session.flush()
-    #         await session.commit()

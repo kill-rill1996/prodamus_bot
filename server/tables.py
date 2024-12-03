@@ -33,10 +33,6 @@ class User(Base):
         back_populates="user",
     )
 
-    # payments: Mapped[list["Payments"]] = relationship(
-    #     back_populates="user",
-    # )
-
 
 class Subscription(Base):
     """Таблица с подписками пользователей"""
@@ -50,13 +46,3 @@ class Subscription(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="subscription")
 
-
-# class Payments(Base):
-#     """Платежи пользователей"""
-#     __tablename__ = "payments"
-#
-#     id: Mapped[int] = mapped_column(primary_key=True)
-#     date: Mapped[datetime.datetime] = mapped_column(nullable=True)
-#
-#     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
-#     user: Mapped["User"] = relationship(back_populates="payments")
