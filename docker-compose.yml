@@ -8,13 +8,22 @@ services:
     depends_on:
       - postgresdb
 
+  nginx:
+    container_name: "nginx"
+    build: ./nginx
+    restart: on-failure
+    depends_on:
+      - api
+    ports:
+      - 80:80
+
   server:
     container_name: "server"
     build: ./server/
     depends_on:
       - postgresdb
     ports:
-      - 8002:8000
+      - 8000:8000
 
   postgresdb:
     image: postgres:13.1
