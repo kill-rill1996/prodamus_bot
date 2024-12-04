@@ -13,7 +13,7 @@ services:
     build: ./nginx
     restart: on-failure
     depends_on:
-      - api
+      - server
     ports:
       - 80:80
 
