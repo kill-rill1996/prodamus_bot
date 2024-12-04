@@ -79,11 +79,19 @@ async def create_subscription_handler(callback: types.CallbackQuery) -> None:
     """Оформление подписки"""
     payment_link = prodamus.get_pay_link(callback.from_user.id)
 
+    # browser link
     await callback.message.edit_text(
         "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
         "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
         reply_markup=kb.payment_keyboard(payment_link).as_markup()
     )
+
+    # web app
+    # await callback.message.edit_text(
+    #     "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
+    #     "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
+    #     reply_markup=kb.payment_keyboard_web_app(payment_link)
+    # )
 
 
 @router.callback_query(lambda c: c.data == "cancel_subscription")

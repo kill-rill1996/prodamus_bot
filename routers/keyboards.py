@@ -1,5 +1,5 @@
-from aiogram.types import InlineKeyboardButton
-from aiogram.utils.keyboard import InlineKeyboardBuilder
+from aiogram.types import InlineKeyboardButton, WebAppInfo
+from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
 
 from database.schemas import UserRel
 
@@ -19,6 +19,19 @@ def payment_keyboard(payment_link: str) -> InlineKeyboardBuilder:
     keyboard.row(InlineKeyboardButton(text="💵 Ссылка на оплату", url=payment_link))
 
     return keyboard
+
+
+def payment_keyboard_web_app(payment_link: str) -> InlineKeyboardMarkup:
+    """Клавиатура со ссылкой на оплату"""
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(
+            text="💵 Ссылка на оплату",
+            web_app=WebAppInfo(url=payment_link),
+        )
+    ]])
+
+    return keyboard
+
 
 
 def invite_link_keyboard(link: str) -> InlineKeyboardBuilder:
