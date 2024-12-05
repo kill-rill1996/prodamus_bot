@@ -8,8 +8,10 @@ import aiohttp
 
 async def main():
     load_dotenv()
+    cookies = {"referer": "YTozOntzOjM6InVybCI7czowOiIiO3M6Mzoic3lzIjtzOjA6IiI7czozOiJrd2QiO3M6MDoiIjt9",
+               "session": "t1qakve4s4rujega19qrnv5rp4"}
 
-    async with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession(cookies=cookies) as session:
         link_form = "https://sheva-nutrition.payform.ru/"
         token = os.getenv("PAY_TOKEN")
         print(token)
@@ -21,13 +23,7 @@ async def main():
         signature = sign(data, token)
         data["signature"] = signature
 
-        headers = {
-            "Host": "79.174.86.161",
-            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0",
-            "Accept": "*/*",
-        }
-
-        async with session.get(link_form, params=data, headers=headers) as resp:
+        async with session.get(link_form, params=data) as resp:
             print(resp.status)
             print(await resp.text())
 
