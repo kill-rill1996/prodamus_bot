@@ -7,6 +7,12 @@ services:
       - .env
     depends_on:
       - postgresdb
+
+  req:
+    container_name: "req"
+    build: ./testing_requests
+    depends_on:
+      - postgresdb
 #
 #  nginx:
 #    container_name: "nginx"
