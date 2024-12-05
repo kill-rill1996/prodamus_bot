@@ -1,35 +1,29 @@
 services:
-  bot:
-    container_name: "bot"
-    build: ./
-    command: sh -c "python main.py"
-    env_file:
-      - .env
-    depends_on:
-      - postgresdb
-
-  req:
-    container_name: "req"
-    build: ./testing_requests
-    depends_on:
-      - postgresdb
-#
-#  nginx:
-#    container_name: "nginx"
-#    build: ./nginx
-#    restart: on-failure
-#    depends_on:
-#      - api
-#    ports:
-#      - 80:80
-
-#  api:
-#    container_name: "api"
-#    build: ./server/
+#  bot:
+#    container_name: "bot"
+#    build: ./
+#    command: sh -c "python main.py"
+#    env_file:
+#      - .env
 #    depends_on:
 #      - postgresdb
-#    ports:
-#      - 8000:8000
+
+  nginx:
+    container_name: "nginx"
+    build: ./nginx
+    restart: on-failure
+    depends_on:
+      - api
+    ports:
+      - 80:80
+
+  api:
+    container_name: "api"
+    build: ./server/
+    depends_on:
+      - postgresdb
+    ports:
+      - 8000:8000
 
   postgresdb:
     image: postgres:13.1
@@ -39,7 +33,7 @@ services:
     env_file:
       - ./.env
     ports:
-      - 5434:5432
+      - 5432:5432
 
 volumes:
   postgres_data:

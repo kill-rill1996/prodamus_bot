@@ -1,0 +1,5 @@
+aiogram
+aiohttp
+APScheduler
+pydantic-settings
+pytz
