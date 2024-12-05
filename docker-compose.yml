@@ -7,15 +7,15 @@ services:
       - .env
     depends_on:
       - postgresdb
-
-  nginx:
-    container_name: "nginx"
-    build: ./nginx
-    restart: on-failure
-    depends_on:
-      - api
-    ports:
-      - 80:80
+#
+#  nginx:
+#    container_name: "nginx"
+#    build: ./nginx
+#    restart: on-failure
+#    depends_on:
+#      - api
+#    ports:
+#      - 80:80
 
   api:
     container_name: "api"
