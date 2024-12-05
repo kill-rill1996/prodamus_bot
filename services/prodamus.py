@@ -21,6 +21,7 @@ def get_pay_link(tg_id: int) -> str:
     }
 
     response = requests.get(link_form, params=data)
+    print(response)
     payment_link = response.content.decode()
     print(payment_link)
     return payment_link

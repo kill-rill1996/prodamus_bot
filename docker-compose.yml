@@ -13,12 +13,12 @@ services:
     build: ./nginx
     restart: on-failure
     depends_on:
-      - server
+      - api
     ports:
       - 80:80
 
-  server:
-    container_name: "server"
+  api:
+    container_name: "api"
     build: ./server/
     depends_on:
       - postgresdb
