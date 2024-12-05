@@ -1,23 +1,19 @@
-import requests
+import asyncio
+
+import aiohttp
 
 
-def main():
-    link_form = "https://sheva-nutrition.payform.ru/"
-    print("TESTING REQ")
+async def main():
+    async with aiohttp.ClientSession() as session:
+        link_form = "https://sheva-nutrition.payform.ru/"
+        print("TESTING REQ")
 
-    data = {
-        "order_id": 714371204,
-        "subscription": 2093463,
-        "customer_extra": "Информация об оплачиваемой подписке",
-        "do": "link",
-        "sys": ""
-    }
+        data = {"order_id": 714371204, "subscription": 2093463, "customer_extra": "Информация об оплачиваемой подписке",
+            "do": "link", "sys": ""}
 
-    response = requests.get(link_form, params=data)
-    print(response)
-    payment_link = response.content.decode()
-    print(payment_link)
+        async with session.get(link_form, params=data) as resp:
+            print(resp.status)
+            print(await resp.text())
 
 
-if __name__ == '__main__':
-    main()
+asyncio.run(main())
