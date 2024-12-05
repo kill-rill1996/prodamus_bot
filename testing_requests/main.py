@@ -21,7 +21,13 @@ async def main():
         signature = sign(data, token)
         data["signature"] = signature
 
-        async with session.get(link_form, params=data) as resp:
+        headers = {
+            "Host": "79.174.86.161",
+            "User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0",
+            "Accept": "*/*",
+        }
+
+        async with session.get(link_form, params=data, headers=headers) as resp:
             print(resp.status)
             print(await resp.text())
 
