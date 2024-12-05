@@ -8,24 +8,43 @@ import aiohttp
 
 async def main():
     load_dotenv()
-    cookies = {"referer": "YTozOntzOjM6InVybCI7czowOiIiO3M6Mzoic3lzIjtzOjA6IiI7czozOiJrd2QiO3M6MDoiIjt9",
-               "session": "t1qakve4s4rujega19qrnv5rp4"}
+    # cookies = {"referer": "YTozOntzOjM6InVybCI7czowOiIiO3M6Mzoic3lzIjtzOjA6IiI7czozOiJrd2QiO3M6MDoiIjt9",
+    #            "session": "t1qakve4s4rujega19qrnv5rp4"}
+    #
+    # async with aiohttp.ClientSession(cookies=cookies) as session:
+    #     link_form = "https://sheva-nutrition.payform.ru/"
+    #     token = os.getenv("PAY_TOKEN")
+    #     print(token)
+    #     print("TESTING REQ")
+    #
+    #     data = {"order_id": 714371204, "subscription": 2093463, "customer_extra": "Информация об оплачиваемой подписке",
+    #         "do": "link", "sys": ""}
+    #
+    #     signature = sign(data, token)
+    #     data["signature"] = signature
+    #
+    #     async with session.get(link_form, params=data) as resp:
+    #         print(resp.status)
+    #         print(await resp.text())
 
-    async with aiohttp.ClientSession(cookies=cookies) as session:
-        link_form = "https://sheva-nutrition.payform.ru/"
-        token = os.getenv("PAY_TOKEN")
-        print(token)
-        print("TESTING REQ")
+    import subprocess
 
-        data = {"order_id": 714371204, "subscription": 2093463, "customer_extra": "Информация об оплачиваемой подписке",
-            "do": "link", "sys": ""}
+    # The command you would type in the terminal
+    command = ["curl", "https://sheva-nutrition.payform.ru/?subscription=2093463&order_id=383838383&do=link&sys=null"]
 
-        signature = sign(data, token)
-        data["signature"] = signature
+    # Run the command
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-        async with session.get(link_form, params=data) as resp:
-            print(resp.status)
-            print(await resp.text())
+    output = result.stdout
+    error = result.stderr
+
+    # Check if it was successful
+    if result.returncode == 0:
+        print("Success:")
+        print(output)
+    else:
+        print("Error:")
+        print(error)
 
 
 def sign(data, secret_key):
