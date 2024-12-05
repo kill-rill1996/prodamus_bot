@@ -33,6 +33,7 @@ async def main():
     command = ["curl", "https://sheva-nutrition.payform.ru/?subscription=2093463&order_id=383838383&do=link&sys=null"]
 
     # Run the command
+    print(command)
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
     output = result.stdout
