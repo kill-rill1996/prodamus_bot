@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     admins: list
     channel_id: str
     price: int = 50
-    sub_number: int = 2074980
+    sub_number: int
     pay_link: str
     pay_token: str
 
