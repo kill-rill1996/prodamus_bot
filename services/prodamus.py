@@ -20,7 +20,7 @@ def get_pay_link(tg_id: int) -> str:
         # "products[0][quantity]": 1,
     }
 
-    response = requests.get(link_form, params=data)
+    response = requests.get(link_form, params=data, headers={"User-Agent": "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0"})
     print(response)
     payment_link = response.content.decode()
     print(payment_link)
