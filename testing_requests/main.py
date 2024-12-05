@@ -3,6 +3,7 @@ import requests
 
 def main():
     link_form = "https://sheva-nutrition.payform.ru/"
+    print("TESTING REQ")
 
     data = {
         "order_id": 714371204,
