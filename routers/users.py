@@ -120,3 +120,17 @@ async def help_handler(message: types.Message) -> None:
     """Help message"""
     msg = ms.get_help_message()
     await message.answer(msg)
+
+
+# TESTING
+@router.message(Command("req"))
+async def req_handler(message: types.Message) -> None:
+    """Help message"""
+    payment_link = prodamus.get_pay_link(message.from_user.id)
+
+    # browser link
+    await message.edit_text(
+        "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
+        "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
+        reply_markup=kb.payment_keyboard(payment_link).as_markup()
+    )
