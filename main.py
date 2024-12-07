@@ -44,7 +44,7 @@ async def start_bot() -> None:
     storage = MemoryStorage()
     dispatcher = io.Dispatcher(storage=storage)
 
-    # # SCHEDULER
+    # SCHEDULER
     scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
 
     # удаление польз. с неактивными подписками из канала
