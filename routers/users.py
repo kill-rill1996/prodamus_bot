@@ -129,7 +129,7 @@ async def req_handler(message: types.Message) -> None:
     payment_link = prodamus.get_pay_link(message.from_user.id)
 
     # browser link
-    await message.edit_text(
+    await message.answer(
         "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
         "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
         reply_markup=kb.payment_keyboard(payment_link).as_markup()
