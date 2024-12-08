@@ -8,14 +8,14 @@ services:
 #    depends_on:
 #      - postgresdb
 
-  nginx:
-    container_name: "nginx"
-    build: ./nginx
-    restart: on-failure
-    depends_on:
-      - api
-    ports:
-      - 80:80
+#  nginx:
+#    container_name: "nginx"
+#    build: ./nginx
+#    restart: on-failure
+#    depends_on:
+#      - api
+#    ports:
+#      - 80:80
 
   api:
     container_name: "api"
@@ -41,9 +41,9 @@ services:
       NGROK_AUTHTOKEN: '...'
     command: 'http --url=heron-settled-centrally.ngrok-free.app http://localhost:8000'
     ports:
-      - '4040:4040'
+      - '80:80'
     expose:
-      - '4040'
+      - '80'
 
 volumes:
   postgres_data:
