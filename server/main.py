@@ -5,6 +5,7 @@ import pytz
 from fastapi import FastAPI, Request
 from prodamuspy import ProdamusPy
 import requests
+from starlette import status
 
 from orm import AsyncOrm
 from settings import settings
@@ -18,7 +19,7 @@ async def root():
     return {"message": "some message"}
 
 
-@app.post("/success_pay")
+@app.post("/success_pay", status_code=status.HTTP_200_OK)
 async def body(request: Request):
     response = await get_body_params(request)
 
