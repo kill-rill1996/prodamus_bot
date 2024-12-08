@@ -17,13 +17,13 @@ services:
 #    ports:
 #      - 80:80
 
-  api:
-    container_name: "api"
-    build: ./server/
-    depends_on:
-      - postgresdb
-    ports:
-      - 8000:8000
+#  api:
+#    container_name: "api"
+#    build: ./server/
+#    depends_on:
+#      - postgresdb
+#    ports:
+#      - 8000:8000
 
   postgresdb:
     image: postgres:13.1
