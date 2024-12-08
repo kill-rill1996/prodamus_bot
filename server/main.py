@@ -9,7 +9,7 @@ from starlette import status
 
 from orm import AsyncOrm
 from settings import settings
-from schemas import UserRel, User, ResponseResult
+from schemas import User, ResponseResult
 
 app = FastAPI()
 
