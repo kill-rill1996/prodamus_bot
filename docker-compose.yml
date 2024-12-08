@@ -35,5 +35,15 @@ services:
     ports:
       - 5432:5432
 
+  ngrok:
+    image: ngrok/ngrok:alpine
+    environment:
+      NGROK_AUTHTOKEN: '...'
+    command: 'http --url=heron-settled-centrally.ngrok-free.app http://localhost:8000'
+    ports:
+      - '8000:8000'
+    expose:
+      - '8000'
+
 volumes:
   postgres_data:
