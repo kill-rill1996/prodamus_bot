@@ -17,13 +17,13 @@ services:
 #    ports:
 #      - 80:80
 
-  api:
-    container_name: "api"
-    build: ./server
-    depends_on:
-      - postgresdb
-    ports:
-      - 8000:8000
+#  api:
+#    container_name: "api"
+#    build: ./server
+#    depends_on:
+#      - postgresdb
+#    ports:
+#      - 8000:8000
 
   postgresdb:
     image: postgres:13.1
@@ -39,7 +39,7 @@ services:
     image: ngrok/ngrok:alpine
     environment:
       NGROK_AUTHTOKEN: '...'
-    command: 'http --url=heron-settled-centrally.ngrok-free.app http://localhost:8000'
+    command: 'http --url=heron-settled-centrally.ngrok-free.app http://79.174.86.161:8000'
     ports:
       - '80:80'
     expose:
