@@ -7,6 +7,7 @@ from database.orm import AsyncOrm
 from database.schemas import UserAdd
 from routers import messages as ms
 from routers import keyboards as kb
+from server.main import generate_invite_link
 from services import prodamus
 
 router = Router()
@@ -122,7 +123,7 @@ async def help_handler(message: types.Message) -> None:
     await message.answer(msg)
 
 
-# TESTING
+# TESTING TODO потом удалить
 @router.message(Command("req"))
 async def req_handler(message: types.Message) -> None:
     """Help message"""
@@ -133,4 +134,18 @@ async def req_handler(message: types.Message) -> None:
         "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
         "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
         reply_markup=kb.payment_keyboard(payment_link).as_markup()
+    )
+
+
+@router.message(Command("link"))
+async def link_handler(message: types.Message) -> None:
+    """Help message"""
+    # payment_link = prodamus.get_pay_link(message.from_user.id)
+    user = await AsyncOrm.get_user_by_tg_id(str(message.from_user.id))
+    invite_link = await generate_invite_link(user)
+
+    # browser link
+    await message.answer(
+        "Ваша ссылка на вступление в канал",
+        reply_markup=kb.invite_link_keyboard(invite_link).as_markup()
     )
