@@ -29,7 +29,7 @@ class SubscriptionRel(Subscription):
     user: list["User"]
 
 
-class ResponseResult(BaseModel):
+class ResponseResultPayment(BaseModel):
     """Поля из ответа сервера Prodamus"""
     tg_id: str
     payment_status: str
