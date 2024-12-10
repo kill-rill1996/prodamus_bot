@@ -54,7 +54,7 @@ async def body(request: Request):
 @app.post("/auto_pay", status_code=status.HTTP_200_OK)
 async def auto_pay_subscription(request: Request):
     """Прием автоплатежа по подписке"""
-    response = await get_body_params_pay_success(request)
+    response = await get_body_params_auto_pay(request)
 
     # проверка на успешный платеж
     # if not (response.sing_is_good and response.payment_status == "success"):
