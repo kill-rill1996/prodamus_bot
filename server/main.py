@@ -179,8 +179,8 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
         tg_id=bodyDict["order_num"],
         sing_is_good=signIsGood,
         customer_phone=bodyDict["customer_phone"],
-        date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M:%S'),    # '2024-12-26 22:08:59'
-        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S')    # '2024-12-26 22:08:59'
+        date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M'),    # '2024-12-26 22:08:59'
+        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M')    # '2024-12-26 22:08:59'
     )
 
     print(result)
