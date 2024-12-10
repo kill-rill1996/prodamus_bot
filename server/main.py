@@ -31,13 +31,15 @@ async def body(request: Request):
     # успешная оплата
     else:
         user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
-        # sub_status: bool = user.subscription[0].active  # текущий статус (до проведения платежа)
 
         # обновляем телефон
         await AsyncOrm.update_user_phone(user.id, response.customer_phone)
 
-        # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести плате
-        await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
+        # меняем дату окончания подписки
+        await AsyncOrm.update_subscribe(user.id,
+                                        response.date_last_payment,
+                                        response.date_next_payment + timedelta(days=1)  # запас по вермени 1 день
+        )
 
         # новая подписка
         invite_link = await generate_invite_link(user)
@@ -55,15 +57,16 @@ async def auto_pay_subscription(request: Request):
         await send_auto_pay_error_message_to_user(int(response.tg_id))
 
     else:
-        # user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
-        user = await AsyncOrm.get_user_with_subscription_by_tg_id(str(420551454))
+        user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
 
-        # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
-        await AsyncOrm.update_subscribe(1, response.date_last_payment, response.date_next_payment + timedelta(days=1)) # запас по времени 1 день
-        # await AsyncOrm.update_subscribe(user.subscription[0].id, response.date_last_payment, response.date_next_payment + timedelta(days=1)) # запас по времени 1 день
+        # меняем дату окончания подписки
+        await AsyncOrm.update_subscribe(
+            user.subscription[0].id,
+            response.date_last_payment,
+            response.date_next_payment + timedelta(days=1)  # запас по времени 1 день
+        )
 
-        await send_success_message_to_user(420551454, response.date_next_payment)
-        # await send_success_message_to_user(user.id, response.date_next_payment)
+        await send_success_message_to_user(user.id, response.date_next_payment)
 
 
 async def generate_invite_link(user: User) -> str:
