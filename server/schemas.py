@@ -37,3 +37,12 @@ class ResponseResultPayment(BaseModel):
     customer_phone: str
     date_last_payment: datetime.datetime
     date_next_payment: datetime.datetime
+
+
+class ResponseResultAutoPay(BaseModel):
+    """Данные из тела ответа по автоплатежу"""
+    tg_id: str
+    sing_is_good: bool
+    customer_phone: str
+    date_last_payment: datetime.datetime
+    date_next_payment: datetime.datetime

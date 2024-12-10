@@ -9,7 +9,7 @@ from starlette import status
 
 from orm import AsyncOrm
 from settings import settings
-from schemas import User, ResponseResultPayment
+from schemas import User, ResponseResultPayment, ResponseResultAutoPay
 
 app = FastAPI()
 
@@ -161,3 +161,28 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
 
     print(result)
     return result
+
+
+async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
+    """Для приема body у автопродления подписки"""
+    prodamus = ProdamusPy(settings.pay_token)
+
+    body = await request.body()
+    bodyDict = prodamus.parse(body.decode())
+    print(f"DECODED BODY: {bodyDict}")
+
+    # TODO доделать проверку и не возвращать если подделка
+    signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
+    print(signIsGood)
+
+    result = ResponseResultAutoPay(
+        tg_id=bodyDict["order_num"],
+        sing_is_good=signIsGood,
+        customer_phone=bodyDict["customer_phone"],
+        date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M:%S'),    # '2024-12-26 22:08:59'
+        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S')    # '2024-12-26 22:08:59'
+    )
+
+    print(result)
+    return result
+
