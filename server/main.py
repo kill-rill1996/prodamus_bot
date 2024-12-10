@@ -65,10 +65,12 @@ async def auto_pay_subscription(request: Request):
 
         # обновляем телефон если еще не было TODO мб убрать тут замену
         if not user.phone:
-            await AsyncOrm.update_user_phone(user.id, response.customer_phone)
+            # await AsyncOrm.update_user_phone(user.id, response.customer_phone)
+            await AsyncOrm.update_user_phone(1, response.customer_phone)
 
         # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
-        await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
+        # await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
+        await AsyncOrm.update_subscribe(1, response.date_last_payment, response.date_next_payment)
 
         await send_success_message_to_user(420551454, response.date_next_payment)
 
