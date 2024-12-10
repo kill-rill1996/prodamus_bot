@@ -57,22 +57,22 @@ async def auto_pay_subscription(request: Request):
     response = await get_body_params_pay_success(request)
 
     # проверка на успешный платеж
-    if not (response.sing_is_good and response.payment_status == "success"):
-        await send_auto_pay_error_message_to_user(int(response.tg_id))
+    # if not (response.sing_is_good and response.payment_status == "success"):
+    #     await send_auto_pay_error_message_to_user(int(response.tg_id))
 
-    else:
-        user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
+    # else:
+    # user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
+    #
+    # # обновляем телефон если еще не было TODO мб убрать тут замену
+    # if not user.phone:
+    #     # await AsyncOrm.update_user_phone(user.id, response.customer_phone)
+    #     await AsyncOrm.update_user_phone(1, response.customer_phone)
 
-        # обновляем телефон если еще не было TODO мб убрать тут замену
-        if not user.phone:
-            # await AsyncOrm.update_user_phone(user.id, response.customer_phone)
-            await AsyncOrm.update_user_phone(1, response.customer_phone)
+    # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
+    # await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
+    await AsyncOrm.update_subscribe(1, response.date_last_payment, response.date_next_payment)
 
-        # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
-        # await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
-        await AsyncOrm.update_subscribe(1, response.date_last_payment, response.date_next_payment)
-
-        await send_success_message_to_user(420551454, response.date_next_payment)
+    await send_success_message_to_user(420551454, response.date_next_payment)
 
 
 async def generate_invite_link(user: User) -> str:
