@@ -55,7 +55,8 @@ async def auto_pay_subscription(request: Request):
         await send_auto_pay_error_message_to_user(int(response.tg_id))
 
     else:
-        user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
+        # user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
+        user = await AsyncOrm.get_user_with_subscription_by_tg_id(str(420551454))
 
         # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
         await AsyncOrm.update_subscribe(1, response.date_last_payment, response.date_next_payment + timedelta(days=1)) # запас по времени 1 день
