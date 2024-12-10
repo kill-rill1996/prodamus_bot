@@ -105,6 +105,7 @@ async def cancel_subscription_handler(callback: types.CallbackQuery) -> None:
 
     # отмена подписки через API Prodamus
     status_code = prodamus.cancel_sub_by_user(user_with_sub.phone)
+
     if status_code == 200:
         # отмена подписки в БД
         await AsyncOrm.disactivate_subscribe(subscription_id)
