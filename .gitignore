@@ -331,5 +331,7 @@ pyrightconfig.json
 pyvenv.cfg
 pip-selfcheck.json
 
+nohup.out
+
 *.sqlite3
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,macos,venv
