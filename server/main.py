@@ -31,23 +31,17 @@ async def body(request: Request):
     # успешная оплата
     else:
         user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
-        sub_status: bool = user.subscription[0].active  # текущий статус (до проведения платежа)
+        # sub_status: bool = user.subscription[0].active  # текущий статус (до проведения платежа)
 
-        # обновляем телефон если еще не было TODO мб заменять телефон каждый раз
-        if not user.phone:
-            await AsyncOrm.update_user_phone(user.id, response.customer_phone)
+        # обновляем телефон
+        await AsyncOrm.update_user_phone(user.id, response.customer_phone)
 
-        # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
+        # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести плате
         await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
 
-        # если подписка активна и продлилась TODO такого случая не будет, продление по отдельному url
-        if sub_status:
-            pass
-
         # новая подписка
-        else:
-            invite_link = await generate_invite_link(user)
-            await send_invite_link_to_user(int(user.tg_id), invite_link)
+        invite_link = await generate_invite_link(user)
+        await send_invite_link_to_user(int(user.tg_id), invite_link)
 
 
 # АВТОПЛАТЕЖ ПО ПОДПИСКЕ
@@ -57,22 +51,18 @@ async def auto_pay_subscription(request: Request):
     response = await get_body_params_auto_pay(request)
 
     # проверка на успешный платеж
-    # if not (response.sing_is_good and response.payment_status == "success"):
-    #     await send_auto_pay_error_message_to_user(int(response.tg_id))
+    if not (response.sing_is_good and response.action_code == "auto_payment"):
+        await send_auto_pay_error_message_to_user(int(response.tg_id))
 
-    # else:
-    # user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
-    #
-    # # обновляем телефон если еще не было TODO мб убрать тут замену
-    # if not user.phone:
-    #     # await AsyncOrm.update_user_phone(user.id, response.customer_phone)
-    #     await AsyncOrm.update_user_phone(1, response.customer_phone)
+    else:
+        user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
 
-    # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
-    # await AsyncOrm.update_subscribe(user.id, response.date_last_payment, response.date_next_payment)
-    await AsyncOrm.update_subscribe(1, response.date_last_payment, response.date_next_payment)
+        # меняем дату окончания подписки TODO мб сделать плюс час чтобы было время провести платеж
+        await AsyncOrm.update_subscribe(1, response.date_last_payment, response.date_next_payment + timedelta(days=1)) # запас по времени 1 день
+        # await AsyncOrm.update_subscribe(user.subscription[0].id, response.date_last_payment, response.date_next_payment + timedelta(days=1)) # запас по времени 1 день
 
-    await send_success_message_to_user(420551454, response.date_next_payment)
+        await send_success_message_to_user(420551454, response.date_next_payment)
+        # await send_success_message_to_user(user.id, response.date_next_payment)
 
 
 async def generate_invite_link(user: User) -> str:
@@ -171,7 +161,6 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
     bodyDict = prodamus.parse(body.decode())
     print(f"DECODED BODY: {bodyDict}")
 
-    # TODO доделать проверку и не возвращать если подделка
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
     print(signIsGood)
 
@@ -180,7 +169,8 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
         sing_is_good=signIsGood,
         customer_phone=bodyDict["customer_phone"],
         date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M'),    # '2024-12-26 22:08:59'
-        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M')    # '2024-12-26 22:08:59'
+        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M'),    # '2024-12-26 22:08:59'
+        action_code=bodyDict["subscription"]["action_code"]
     )
 
     print(result)
