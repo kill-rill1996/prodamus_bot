@@ -40,7 +40,7 @@ async def kick_users_with_not_active_sub(bot: aiogram.Bot) -> None:
     for user in users:
         subscription = await AsyncOrm.get_subscription_by_user_id(user.id)
 
-        if subscription.expire_date.date() < datetime.datetime.now().date():
+        if subscription.expire_date is not None and subscription.expire_date.date() < datetime.datetime.now().date():
             # выгоняем из канала
             try:
                 await kick_user_from_channel(int(user.tg_id), bot)
