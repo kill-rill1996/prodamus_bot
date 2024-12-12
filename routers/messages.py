@@ -55,7 +55,7 @@ def get_status_message(is_active: bool, expire_date: datetime.datetime) -> str:
 def get_cancel_subscribe_message(expire_date: datetime.datetime) -> str:
     """Сообщение об отмене подписки"""
     message = "⛔️ Ваша подписка отменена\n\n" \
-              f"Доступ к каналу будет прекращён: {convert_date(expire_date)}.\n\n" \
+              f"Доступ к каналу будет прекращён: {convert_date(expire_date - datetime.timedelta(days=1))}.\n\n" \
               f"Вы всегда можете оформить подписку заново с помощью команды /oplata"
 
     return message
