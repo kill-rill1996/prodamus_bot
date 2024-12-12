@@ -143,7 +143,7 @@ async def cancel_subscription_handler(message: types.Message | types.CallbackQue
     # если неактивна либо отменена, но еще не вышел срок
     else:
         # подписка отменена и вышел срок
-        if user.subscription[0].expire_date - datetime.timedelta(days=1) < datetime.datetime.now():
+        if user.subscription[0].expire_date < datetime.datetime.now():
             msg = f"Ваша подписка уже отменена, вы сможете ее продлить после окончания оплаченного периода " \
                   f"<b>{convert_date(user.subscription[0].expire_date)}</b>"
         else:
