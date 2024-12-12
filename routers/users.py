@@ -103,19 +103,35 @@ async def check_status_handler(message: types.Message | types.CallbackQuery) -> 
 @router.callback_query(lambda c: c.data == "subscribe")
 async def create_subscription_handler(message: types.CallbackQuery | types.Message) -> None:
     """Оформление подписки"""
-    payment_link = prodamus.get_pay_link(message.from_user.id)
+    user = await AsyncOrm.get_user_with_subscription_by_tg_id(str(message.from_user.id))
 
-    # browser link
-    if type(message) == types.Message:
-        await message.answer(
-            ms.subscribe_message(),
-            reply_markup=kb.payment_keyboard(payment_link, need_back_button=False).as_markup()
-        )
+    # подписка активна или неактивна, но срок еще не вышел
+    if user.subscription[0].active or (user.subscription[0].expire_date is not None and
+                 user.subscription[0].expire_date.date() >= datetime.datetime.now().date()):
+        if type(message) == types.Message:
+            await message.answer(
+                ms.subscribe_message(),
+                reply_markup=kb.payment_keyboard(need_back_button=False, need_pay_link=False).as_markup()
+            )
+        else:
+            await message.message.edit_text(
+                ms.subscribe_message(),
+                reply_markup=kb.payment_keyboard(need_back_button=True, need_pay_link=False).as_markup()
+            )
+
     else:
-        await message.message.edit_text(
-            ms.subscribe_message(),
-            reply_markup=kb.payment_keyboard(payment_link).as_markup()
-        )
+        payment_link = prodamus.get_pay_link(message.from_user.id)
+
+        if type(message) == types.Message:
+            await message.answer(
+                ms.subscribe_message(),
+                reply_markup=kb.payment_keyboard(payment_link, need_back_button=False).as_markup()
+            )
+        else:
+            await message.message.edit_text(
+                ms.subscribe_message(),
+                reply_markup=kb.payment_keyboard(payment_link).as_markup()
+            )
 
     # web app
     # await callback.message.edit_text(

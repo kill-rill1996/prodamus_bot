@@ -44,13 +44,17 @@ def subscription_keyboard() -> InlineKeyboardBuilder:
     return keyboard
 
 
-def payment_keyboard(payment_link: str, need_back_button: bool = True) -> InlineKeyboardBuilder:
+def payment_keyboard(payment_link: str = None, need_back_button: bool = True, need_pay_link: bool = True) -> InlineKeyboardBuilder:
     """Клавиатура со ссылкой на оплату"""
     keyboard = InlineKeyboardBuilder()
-    keyboard.row(InlineKeyboardButton(text="💵 Ссылка на оплату", url=payment_link))
+    if need_pay_link:
+        keyboard.row(InlineKeyboardButton(text="💵 Ссылка на оплату", url=payment_link))
+
     keyboard.row(InlineKeyboardButton(text="Публичная оферта", url="https://www.google.ru/?hl=ru"))
+
     if need_back_button:
         keyboard.row(InlineKeyboardButton(text="<< назад", callback_data="back_to_start"))
+
     keyboard.adjust(1)
 
     return keyboard
