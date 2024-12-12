@@ -8,6 +8,7 @@ from database.schemas import UserAdd
 from routers import messages as ms
 from routers import keyboards as kb
 from services import prodamus
+from utils import convert_date
 
 router = Router()
 
@@ -81,7 +82,7 @@ async def podpiska_menu(message: types.Message | types.CallbackQuery) -> None:
 
 @router.message(Command("status"))
 @router.callback_query(lambda c: c.data == "callback_status")
-async def start_handler(message: types.Message | types.CallbackQuery) -> None:
+async def check_status_handler(message: types.Message | types.CallbackQuery) -> None:
     """Проверка статуса подписки"""
     tg_id = str(message.from_user.id)
     user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
@@ -127,12 +128,31 @@ async def create_subscription_handler(message: types.CallbackQuery | types.Messa
 @router.callback_query(lambda c: c.data == "callback_otmena")
 async def cancel_subscription_handler(message: types.Message | types.CallbackQuery) -> None:
     """Начало отмены подписки"""
-    msg = "<b>Вы действительной хотите отменить подписку?</b>"
+    # проверяем активность подписки
+    user = await AsyncOrm.get_user_with_subscription_by_tg_id(str(message.from_user.id))
 
-    if type(message) == types.Message:
-        await message.answer(msg, reply_markup=kb.yes_no_keyboard(need_back_button=False).as_markup())
+    # если активна
+    if user.subscription[0].active:
+        msg = "<b>Вы действительной хотите отменить подписку?</b>"
+
+        if type(message) == types.Message:
+            await message.answer(msg, reply_markup=kb.yes_no_keyboard(need_back_button=False).as_markup())
+        else:
+            await message.message.edit_text(msg, reply_markup=kb.yes_no_keyboard(need_back_button=True).as_markup())
+
+    # если неактивна либо отменена, но еще не вышел срок
     else:
-        await message.message.edit_text(msg, reply_markup=kb.yes_no_keyboard(need_back_button=True).as_markup())
+        # подписка отменена и вышел срок
+        if user.subscription[0].expire_date - datetime.timedelta(days=1) < datetime.datetime.now():
+            msg = f"Ваша подписка уже отменена, вы сможете ее продлить после окончания оплаченного периода " \
+                  f"<b>{convert_date(user.subscription[0].expire_date)}</b>"
+        else:
+            msg = "Ваша подписка неактивна\n<i>Вы можете приобрести подписку с помощью команды /oplata</i>"
+
+        if type(message) == types.Message:
+            await message.answer(msg)
+        else:
+            await message.message.edit_text(msg, reply_markup=kb.back_keyboard("callback_podpiska").as_markup())
 
 
 @router.callback_query(lambda c: c.data == "yes_otmena")
