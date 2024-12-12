@@ -67,7 +67,7 @@ async def auto_pay_subscription(request: Request):
             response.date_next_payment + timedelta(days=1)  # запас по времени 1 день
         )
 
-        await send_success_message_to_user(user.id, response.date_next_payment)
+        await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
 
 
 async def generate_invite_link(user: User) -> str:
