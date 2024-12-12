@@ -21,9 +21,13 @@ from settings import settings
 async def set_commands(bot: io.Bot):
     """Перечень команд для бота"""
     commands = [
-        BotCommand(command="/start", description="👋 Начало"),
-        BotCommand(command="/status", description="💰 Проверка подписки"),
-        BotCommand(command="/help", description="❓ Помощь"),
+        BotCommand(command="/start", description="Начало"),
+        BotCommand(command="/menu", description="Главное меню"),
+        BotCommand(command="/podpiska", description="Подписка"),
+        BotCommand(command="/oplata", description="Оплата"),
+        BotCommand(command="/status", description="Статус моей подписки"),
+        BotCommand(command="/otmena", description="Отменить подписку"),
+        BotCommand(command="/vopros", description="Задать вопрос"),
     ]
 
     await bot.set_my_commands(commands, BotCommandScopeDefault())

@@ -12,8 +12,9 @@ from services import prodamus
 router = Router()
 
 
+@router.callback_query(lambda c: c.data == "back_to_start")
 @router.message(Command("start"))
-async def start_handler(message: types.Message) -> None:
+async def start_handler(message: types.Message | types.CallbackQuery) -> None:
     """Старт бота и регистрация пользователя"""
     # проверка наличия пользователя
     tg_id = str(message.from_user.id)
@@ -28,11 +29,15 @@ async def start_handler(message: types.Message) -> None:
                 (user_with_sub.subscription[0].expire_date is not None and
                  user_with_sub.subscription[0].expire_date.date() >= datetime.datetime.now().date()):
 
-            msg += "\n\nВы можете проверить статус подписки с помощью команды /status"
-            await message.answer(msg)
+            if type(message) == types.Message:
+                await message.answer(msg)
+            else:
+                await message.message.edit_text(msg)
         else:
-            msg += "\n\nНажмите кнопку ниже для оформления подписки"
-            await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
+            if type(message) == types.Message:
+                await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
+            else:
+                await message.message.edit_text(msg, reply_markup=kb.subscription_keyboard().as_markup())
 
     # регистрация
     else:
@@ -47,44 +52,68 @@ async def start_handler(message: types.Message) -> None:
 
         # создание неактивной подписки
         await AsyncOrm.create_subscription(user_id)
-        msg += "\n\nНажмите кнопку ниже для оформления подписки"
         await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
 
 
+@router.message(Command("menu"))
+@router.callback_query(lambda c: c.data == "main_menu")
+async def main_menu(message: types.Message | types.CallbackQuery) -> None:
+    """Главное меню"""
+    msg = "<b>Меню участника канала «Ежедневное питание | Sheva Nutrition»:</b>"
+
+    if type(message) == types.Message:
+        await message.answer(msg, reply_markup=kb.main_menu_keyboard().as_markup())
+    else:
+        await message.message.edit_text(msg, reply_markup=kb.main_menu_keyboard().as_markup())
+
+
+@router.message(Command("podpiska"))
+@router.callback_query(lambda c: c.data == "callback_podpiska")
+async def podpiska_menu(message: types.Message | types.CallbackQuery) -> None:
+    """Меню управления подпиской"""
+    msg = "Своей подпиской можно управлять здесь:"
+
+    if type(message) == types.Message:
+        await message.answer(msg, reply_markup=kb.podpiska_menu_keyboard(need_back_button=False).as_markup())
+    else:
+        await message.message.edit_text(msg, reply_markup=kb.podpiska_menu_keyboard(need_back_button=True).as_markup())
+
+
 @router.message(Command("status"))
-async def start_handler(message: types.Message) -> None:
+@router.callback_query(lambda c: c.data == "callback_status")
+async def start_handler(message: types.Message | types.CallbackQuery) -> None:
     """Проверка статуса подписки"""
     tg_id = str(message.from_user.id)
     user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
+
     is_active = user_with_sub.subscription[0].active
     expire_date = user_with_sub.subscription[0].expire_date
 
     msg = ms.get_status_message(is_active, expire_date)
 
-    if not is_active:
-        # подписка отменена, но срок еще не вышел
-        if expire_date is not None and expire_date.date() >= datetime.datetime.now().date():
-            await message.answer(msg)
-        # подписка отменена и вышел срок = подписка не оформлена
-        else:
-            await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
-
-    # подписка активна
+    if type(message) == types.Message:
+        await message.answer(msg)
     else:
-        await message.answer(msg, reply_markup=kb.cancel_sub_keyboard().as_markup())
+        await message.message.edit_text(msg, reply_markup=kb.back_keyboard("callback_podpiska").as_markup())
 
 
+@router.message(Command("oplata"))
 @router.callback_query(lambda c: c.data == "subscribe")
-async def create_subscription_handler(callback: types.CallbackQuery) -> None:
+async def create_subscription_handler(message: types.CallbackQuery | types.Message) -> None:
     """Оформление подписки"""
-    payment_link = prodamus.get_pay_link(callback.from_user.id)
+    payment_link = prodamus.get_pay_link(message.from_user.id)
 
     # browser link
-    await callback.message.edit_text(
-        "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
-        "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
-        reply_markup=kb.payment_keyboard(payment_link).as_markup()
-    )
+    if type(message) == types.Message:
+        await message.answer(
+            ms.subscribe_message(),
+            reply_markup=kb.payment_keyboard(payment_link, need_back_button=False).as_markup()
+        )
+    else:
+        await message.message.edit_text(
+            ms.subscribe_message(),
+            reply_markup=kb.payment_keyboard(payment_link).as_markup()
+        )
 
     # web app
     # await callback.message.edit_text(
@@ -94,8 +123,20 @@ async def create_subscription_handler(callback: types.CallbackQuery) -> None:
     # )
 
 
-@router.callback_query(lambda c: c.data == "cancel_subscription")
-async def cancel_subscription_handler(callback: types.CallbackQuery) -> None:
+@router.message(Command("otmena"))
+@router.callback_query(lambda c: c.data == "callback_otmena")
+async def cancel_subscription_handler(message: types.Message | types.CallbackQuery) -> None:
+    """Начало отмены подписки"""
+    msg = "<b>Вы действительной хотите отменить подписку?</b>"
+
+    if type(message) == types.Message:
+        await message.answer(msg, reply_markup=kb.yes_no_keyboard(need_back_button=False).as_markup())
+    else:
+        await message.message.edit_text(msg, reply_markup=kb.yes_no_keyboard(need_back_button=True).as_markup())
+
+
+@router.callback_query(lambda c: c.data == "yes_otmena")
+async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
     """Отмена подписки"""
     tg_id = str(callback.from_user.id)
 
@@ -116,11 +157,16 @@ async def cancel_subscription_handler(callback: types.CallbackQuery) -> None:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
 
 
-@router.message(Command("help"))
-async def help_handler(message: types.Message) -> None:
-    """Help message"""
-    msg = ms.get_help_message()
-    await message.answer(msg)
+@router.message(Command("vopros"))
+@router.callback_query(lambda c: c.data == "callback_vopros")
+async def vopros_handler(message: types.Message | types.CallbackQuery) -> None:
+    """Задать вопрос"""
+    msg = ms.get_vopros_message()
+
+    if type(message) == types.Message:
+        await message.answer(msg)
+    else:
+        await message.message.edit_text(msg, reply_markup=kb.back_keyboard("main_menu").as_markup())
 
 
 # TESTING TODO потом удалить

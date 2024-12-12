@@ -19,6 +19,13 @@ async def root():
     return {"message": "some message"}
 
 
+@app.get("/get_link")
+async def root():
+    await send_invite_link_to_user(int("420551454"),
+                                   "https://www.google.ru/?hl=ru",
+                                   expire_date=datetime.now())
+
+
 # ПОКУПКА ПОДПИСКИ
 @app.post("/success_pay", status_code=status.HTTP_200_OK)
 async def body(request: Request):
@@ -43,7 +50,7 @@ async def body(request: Request):
 
         # новая подписка
         invite_link = await generate_invite_link(user)
-        await send_invite_link_to_user(int(user.tg_id), invite_link)
+        await send_invite_link_to_user(int(user.tg_id), invite_link, expire_date=response.date_next_payment)
 
 
 # АВТОПЛАТЕЖ ПО ПОДПИСКЕ
@@ -88,14 +95,25 @@ async def generate_invite_link(user: User) -> str:
     return invite_link
 
 
-async def send_invite_link_to_user(chat_id: int, link: str) -> None:
+async def send_invite_link_to_user(chat_id: int, link: str, expire_date: datetime) -> None:
     """Отправка сообщения пользователю после оплаты"""
+    text = "Статус подписки на закрытый канал с ежедневным питанием от Шевы:\n\n" \
+           f"✅ <b>Активна</b>\n\nСледующее списание - <b>{expire_date.date().strftime('%d.%m.%Y')}</b>\n" \
+           "<i>*Вы всегда можете отменить подписку через меню бота</i>\n\n" \
+           "Ваша ссылка на вступление в закрытый канал\n\n" \
+           "↓↓↓"
+
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={'chat_id': chat_id,
-              'text': 'Ваша ссылка на вступление в закрытый канал',
+              'text': text,
+              'parse_mode': "HTML",
               "reply_markup": json.dumps(
-                  {"inline_keyboard": [[{"text": "🔗Вступить в канал", "url": link}]]},
+                  {"inline_keyboard": [
+                      [{"text": "🔗Вступить в канал", "url": link}],
+                      [{"text": "Вернуться в меню", "callback_data": "main_menu"}]
+
+                  ]},
                   separators=(',', ':'))
               }
     ).json()
@@ -104,10 +122,20 @@ async def send_invite_link_to_user(chat_id: int, link: str) -> None:
 
 async def send_error_message_to_user(chat_id: int) -> None:
     """Оповещение о неуспешной оплате"""
+    text = "⛔️ Мы не смогли продлить вашу подписку на канал.\n\n Доступ к каналу будет прекращён.\n\n" \
+           "Возможно у вас не хватает средств на балансе, либо ваша карта больше не действительна.\n\n" \
+           "Попробуйте оформить подписку заново"
+
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={'chat_id': chat_id,
-              'text': 'Ошибка при выполнении оплаты подписки',
+              'parse_mode': "HTML",
+              'text': text,
+              "reply_markup": json.dumps(
+                  {"inline_keyboard": [
+                      [{"text": "Оформить подписку", "callback_data": "subscribe"}]
+                  ]},
+                  separators=(',', ':'))
               }
     ).json()
 
