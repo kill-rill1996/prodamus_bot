@@ -19,12 +19,6 @@ async def root():
     return {"message": "some message"}
 
 
-@app.get("/get_link")
-async def root():
-    await send_invite_link_to_user(int("420551454"),
-                                   "https://www.google.ru/?hl=ru",
-                                   expire_date=datetime.now())
-
 
 # ПОКУПКА ПОДПИСКИ
 @app.post("/success_pay", status_code=status.HTTP_200_OK)
