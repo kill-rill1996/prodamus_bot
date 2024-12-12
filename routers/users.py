@@ -8,7 +8,7 @@ from database.schemas import UserAdd
 from routers import messages as ms
 from routers import keyboards as kb
 from services import prodamus
-from utils import convert_date
+from routers.utils import convert_date
 
 router = Router()
 
