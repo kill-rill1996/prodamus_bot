@@ -149,7 +149,8 @@ async def send_success_message_to_user(chat_id: int, expire_date: datetime) -> N
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={'chat_id': chat_id,
-              'text': f'Ваша подписка успешно продлена до {expire_date}',
+              'parse_mode': "HTML",
+              'text': f'Ваша подписка успешно продлена до <b>{expire_date.date().strftime("%d.%m.%Y")}<b>',
               }
     ).json()
     print(response)
