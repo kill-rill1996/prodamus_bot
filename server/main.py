@@ -152,6 +152,7 @@ async def send_success_message_to_user(chat_id: int, expire_date: datetime) -> N
               'text': f'Ваша подписка успешно продлена до {expire_date}',
               }
     ).json()
+    print(response)
 
 
 async def get_body_params_pay_success(request: Request) -> ResponseResultPayment:
