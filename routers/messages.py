@@ -34,7 +34,7 @@ def get_status_message(is_active: bool, expire_date: datetime.datetime) -> str:
     if is_active:
         message = "Статус подписки на закрытый канал с ежедневным питанием от Шевы:\n\n" \
                   "✅ Активна\n\n" \
-                  f"Следующее списание - {convert_date(expire_date)}\n" \
+                  f"Следующее списание - <b>{convert_date(expire_date)}</b>\n" \
                   f"*<i>Вы всегда можете отменить подписку через меню бота</i>\n\n"
 
     # если подписка неактивна
@@ -42,7 +42,7 @@ def get_status_message(is_active: bool, expire_date: datetime.datetime) -> str:
         if expire_date is not None and expire_date.date() >= datetime.datetime.now().date():
             message = "Статус подписки на закрытый канал с ежедневным питанием от Шевы:\n\n" \
                       "⚠️ Подписка отменена\n\n" \
-                      f"Доступ к каналу будет прекращён {convert_date(expire_date - datetime.timedelta(days=1))}.\n" \
+                      f"Доступ к каналу будет прекращён <b>{convert_date(expire_date - datetime.timedelta(days=1))}</b>.\n" \
                       f"*<i>После окончания текущей подписки, вы сможете оформить подписку заново</i>\n\n"
 
         else:
