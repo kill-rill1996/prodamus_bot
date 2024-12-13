@@ -7,11 +7,19 @@ from database.schemas import UserRel
 def main_menu_keyboard() -> InlineKeyboardBuilder:
     """Клавиатура главного меню"""
     keyboard = InlineKeyboardBuilder()
-    keyboard.row(InlineKeyboardButton(text="Перейти в канал", url="https://t.me/+zcK6n-tCqW8zYWU6"))
+    # keyboard.row(InlineKeyboardButton(text="Перейти в канал", url="https://t.me/+zcK6n-tCqW8zYWU6"))
+    keyboard.row(InlineKeyboardButton(text="Перейти в канал", url="https://web.telegram.org/a/#-1002165879849"))
     keyboard.row(InlineKeyboardButton(text="Подписка", callback_data="callback_podpiska"))
     keyboard.row(InlineKeyboardButton(text="Задать вопрос", callback_data="callback_vopros"))
     keyboard.adjust(1)
 
+    return keyboard
+
+
+def start_keyboard() -> InlineKeyboardBuilder:
+    """Клавиатура для /start меню"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text="Главное меню", callback_data="main_menu"))
     return keyboard
 
 

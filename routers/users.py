@@ -32,9 +32,9 @@ async def start_handler(message: types.Message | types.CallbackQuery) -> None:
                  user_with_sub.subscription[0].expire_date.date() >= datetime.datetime.now().date()):
 
             if type(message) == types.Message:
-                await message.answer(msg)
+                await message.answer(msg, reply_markup=kb.start_keyboard().as_markup())
             else:
-                await message.message.edit_text(msg)
+                await message.message.edit_text(msg, reply_markup=kb.start_keyboard().as_markup())
         else:
             if type(message) == types.Message:
                 await message.answer(msg + "↓↓↓", reply_markup=kb.subscription_keyboard().as_markup())
