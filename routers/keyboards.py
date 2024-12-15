@@ -1,14 +1,16 @@
 from aiogram.types import InlineKeyboardButton, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
 
+from settings import settings
 from database.schemas import UserRel
 
 
-def main_menu_keyboard() -> InlineKeyboardBuilder:
+def main_menu_keyboard(sub_is_active: bool) -> InlineKeyboardBuilder:
     """Клавиатура главного меню"""
     keyboard = InlineKeyboardBuilder()
-    # keyboard.row(InlineKeyboardButton(text="Перейти в канал", url="https://t.me/+zcK6n-tCqW8zYWU6"))
-    keyboard.row(InlineKeyboardButton(text="Перейти в канал", url="https://web.telegram.org/a/#-1002165879849"))
+    # показываем ссылку только подписчикам
+    if sub_is_active:
+        keyboard.row(InlineKeyboardButton(text="Перейти в канал", url=settings.invite_link))
     keyboard.row(InlineKeyboardButton(text="Подписка", callback_data="callback_podpiska"))
     keyboard.row(InlineKeyboardButton(text="Задать вопрос", callback_data="callback_vopros"))
     keyboard.adjust(1)
