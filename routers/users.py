@@ -20,29 +20,40 @@ async def start_handler(message: types.Message | types.CallbackQuery) -> None:
     # проверка наличия пользователя
     tg_id = str(message.from_user.id)
     user = await AsyncOrm.get_user_by_tg_id(tg_id)
-    msg = ms.get_welcome_message()
 
     # уже зарегистрирован
     if user:
+
         user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
 
-        # подписка активна
+        # подписка активна или неактивна, но еще не вышел оплаченный срок
         if user_with_sub.subscription[0].active or \
                 (user_with_sub.subscription[0].expire_date is not None and
                  user_with_sub.subscription[0].expire_date.date() >= datetime.datetime.now().date()):
 
+            msg = "<b>Меню участника канала «Ежедневное питание | Sheva Nutrition»:</b>"
             if type(message) == types.Message:
-                await message.answer(msg, reply_markup=kb.start_keyboard().as_markup())
+                await message.answer(msg, reply_markup=kb.main_menu_keyboard().as_markup())
             else:
-                await message.message.edit_text(msg, reply_markup=kb.start_keyboard().as_markup())
+                await message.message.edit_text(msg, reply_markup=kb.main_menu_keyboard().as_markup())
+
+        # подписка неактивна
         else:
-            if type(message) == types.Message:
-                await message.answer(msg + "↓↓↓", reply_markup=kb.subscription_keyboard().as_markup())
+            # раньше была подписка
+            if user.phone:
+                msg = ms.welcome_message_second()
+            # еще не было подписки
             else:
-                await message.message.edit_text(msg + "↓↓↓", reply_markup=kb.subscription_keyboard().as_markup())
+                msg = ms.get_welcome_message()
+
+            if type(message) == types.Message:
+                await message.answer(msg, reply_markup=kb.subscription_keyboard().as_markup())
+            else:
+                await message.message.edit_text(msg, reply_markup=kb.subscription_keyboard().as_markup())
 
     # регистрация
     else:
+        msg = ms.get_welcome_message()
         # создание пользователя
         new_user = UserAdd(
             tg_id=str(message.from_user.id),
@@ -75,10 +86,23 @@ async def podpiska_menu(message: types.Message | types.CallbackQuery) -> None:
     """Меню управления подпиской"""
     msg = "Своей подпиской можно управлять здесь:"
 
-    if type(message) == types.Message:
-        await message.answer(msg, reply_markup=kb.podpiska_menu_keyboard(need_back_button=False).as_markup())
+    # проверка активности подписки
+    user = await AsyncOrm.get_user_with_subscription_by_tg_id(str(message.from_user.id))
+    # активна
+    if user.subscription[0].active:
+        active_sub = True
+    # неактивна, но оплаченный срок еще не вышел
+    elif user.subscription[0].expire_date is not None and \
+            user.subscription[0].expire_date.date() >= datetime.datetime.now().date():
+        active_sub = None
+    # неактивна
     else:
-        await message.message.edit_text(msg, reply_markup=kb.podpiska_menu_keyboard(need_back_button=True).as_markup())
+        active_sub = False
+
+    if type(message) == types.Message:
+        await message.answer(msg, reply_markup=kb.podpiska_menu_keyboard(active_sub, need_back_button=False).as_markup())
+    else:
+        await message.message.edit_text(msg, reply_markup=kb.podpiska_menu_keyboard(active_sub, need_back_button=True).as_markup())
 
 
 @router.message(Command("status"))
@@ -108,6 +132,7 @@ async def create_subscription_handler(message: types.CallbackQuery | types.Messa
     # подписка активна или неактивна, но срок еще не вышел
     if user.subscription[0].active or (user.subscription[0].expire_date is not None and
                  user.subscription[0].expire_date.date() >= datetime.datetime.now().date()):
+
         if type(message) == types.Message:
             await message.answer(
                 ms.subscribe_message(),
@@ -160,7 +185,7 @@ async def cancel_subscription_handler(message: types.Message | types.CallbackQue
     # если неактивна либо отменена, но еще не вышел срок
     else:
         # подписка отменена и срок не вышел
-        if user.subscription[0].expire_date > datetime.datetime.now():
+        if user.subscription[0].expire_date is not None and user.subscription[0].expire_date > datetime.datetime.now():
             msg = f"Ваша подписка уже отменена, вы сможете ее продлить после окончания оплаченного периода " \
                   f"<b>{convert_date(user.subscription[0].expire_date)}</b>"
         # подписка отменена и вышел срок

@@ -23,12 +23,25 @@ def start_keyboard() -> InlineKeyboardBuilder:
     return keyboard
 
 
-def podpiska_menu_keyboard(need_back_button: bool = True) -> InlineKeyboardBuilder:
+def podpiska_menu_keyboard(active_sub: bool, need_back_button: bool = True) -> InlineKeyboardBuilder:
     """Клавиатура меню полпсики"""
     keyboard = InlineKeyboardBuilder()
 
     keyboard.row(InlineKeyboardButton(text="Статус моей подписки", callback_data="callback_status"))
-    keyboard.row(InlineKeyboardButton(text="Отменить подписку", callback_data="callback_otmena"))
+    # проверяем активность подписки
+
+    # активна
+    if active_sub:
+        keyboard.row(InlineKeyboardButton(text="Отменить подписку", callback_data="callback_otmena"))
+
+    # неактивна, но оплаченный срок еще не вышел
+    elif active_sub == None:
+        pass
+
+    # неактивна
+    elif active_sub == False:
+        keyboard.row(InlineKeyboardButton(text="Оформить подписку", callback_data=f"subscribe"))
+
     if need_back_button:
         keyboard.row(InlineKeyboardButton(text="<< назад", callback_data="main_menu"))
     keyboard.adjust(1)

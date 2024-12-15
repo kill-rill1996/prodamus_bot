@@ -135,3 +135,15 @@ class AsyncOrm:
             subscription = schemas.Subscription.model_validate(row, from_attributes=True)
 
             return subscription
+
+    @staticmethod
+    async def remove_expire_date(subscription_id: int) -> None:
+        """Замена expire_date на null"""
+        async with async_session_factory() as session:
+            query = update(tables.Subscription) \
+                .where(tables.Subscription.id == subscription_id) \
+                .values(expire_date=None)
+
+            await session.execute(query)
+            await session.flush()
+            await session.commit()
