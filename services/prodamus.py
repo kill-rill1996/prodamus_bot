@@ -1,5 +1,4 @@
 from collections.abc import MutableMapping
-
 import requests
 from settings import settings
 
@@ -14,16 +13,13 @@ def get_pay_link(tg_id: int) -> str:
         "customer_extra": "Информация об оплачиваемой подписке",
         "do": "link",
         "sys": "",
-
         # "products[0][name]": "Подписка на 1 мес.",
         # "products[0][price]": 50,
         # "products[0][quantity]": 1,
     }
 
     response = requests.get(link_form, params=data)
-    print(response)
     payment_link = response.content.decode()
-    print(payment_link)
     return payment_link
 
 

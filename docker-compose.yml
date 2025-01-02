@@ -24,6 +24,8 @@ services:
       - postgresdb
     ports:
       - 8000:8000
+    volumes:
+      - logs/fastapi.log:/app/fastapi.log
 
   postgresdb:
     image: postgres:13.1
