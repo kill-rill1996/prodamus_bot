@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
-
 import pytz
+import aiogram
+from loguru import logger
 
 from settings import settings
 
-import aiogram
+logger.add("logs/bot.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
 
 
 async def generate_invite_link(bot: aiogram.Bot, name: str) -> str:
@@ -23,3 +24,4 @@ async def kick_user_from_channel(user_tg_id: int, bot: aiogram.Bot):
     """Удаление пользователя из канала"""
     await bot.ban_chat_member(settings.channel_id, user_tg_id)
     await bot.unban_chat_member(settings.channel_id, user_tg_id)
+    logger.info(f"Пользователь с tg id {user_tg_id} кикнут из канала.")
