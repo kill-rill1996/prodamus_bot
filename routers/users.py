@@ -9,8 +9,10 @@ from routers import messages as ms
 from routers import keyboards as kb
 from services import prodamus
 from routers.utils import convert_date
+from loguru import logger
 
 router = Router()
+logger.add("logs/bot.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
 
 
 @router.callback_query(lambda c: c.data == "back_to_start")
@@ -230,8 +232,10 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
 
         msg = ms.get_cancel_subscribe_message(user_with_sub.subscription[0].expire_date)
         await callback.message.edit_text(msg)
+        logger.info(f"Пользователь с tg id {tg_id} отменил подписку")
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
+        logger.warning(f"Ошибка при отмене подписки у пользователя с tg id {tg_id}")
 
 
 @router.message(Command("vopros"))

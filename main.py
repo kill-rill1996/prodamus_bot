@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from loguru import logger
 
 import aiogram as io
 from aiogram.client.default import DefaultBotProperties

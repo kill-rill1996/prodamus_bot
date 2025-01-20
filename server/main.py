@@ -6,18 +6,19 @@ from fastapi import FastAPI, Request
 from prodamuspy import ProdamusPy
 import requests
 from starlette import status
+from loguru import logger
 
 from orm import AsyncOrm
 from settings import settings
 from schemas import User, ResponseResultPayment, ResponseResultAutoPay
 
 app = FastAPI()
+logger.add("fastapi.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
 
 
 @app.get("/")
 async def root():
     return {"message": "some message"}
-
 
 
 # ПОКУПКА ПОДПИСКИ
@@ -28,6 +29,7 @@ async def body(request: Request):
     # проверка на успешный платеж
     if not(response.sing_is_good and response.payment_status == "success"):
         await send_error_message_to_user(int(response.tg_id))
+        logger.warning(f"Не прошел платеж у пользователя с tg id {response.tg_id}")
 
     # успешная оплата
     else:
@@ -45,6 +47,7 @@ async def body(request: Request):
         # новая подписка
         invite_link = await generate_invite_link(user)
         await send_invite_link_to_user(int(user.tg_id), invite_link, expire_date=response.date_next_payment)
+        logger.info(f"Пользователь с tg id {user.tg_id}, телефон {user.phone} оплатил подписку")
 
 
 # АВТОПЛАТЕЖ ПО ПОДПИСКЕ
@@ -56,6 +59,7 @@ async def auto_pay_subscription(request: Request):
     # проверка на успешный платеж
     if not (response.sing_is_good and response.action_code == "auto_payment"):
         await send_auto_pay_error_message_to_user(int(response.tg_id))
+        logger.warning(f"Автоматический платеж не прошел у пользователя с tg id {response.tg_id}")
 
     else:
         user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
@@ -68,6 +72,7 @@ async def auto_pay_subscription(request: Request):
         )
 
         await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
+        logger.info(f"Пользователь с tg id {user.tg_id}, телефон {user.phone} автоматически оплатил подписку")
 
 
 async def generate_invite_link(user: User) -> str:
@@ -84,7 +89,6 @@ async def generate_invite_link(user: User) -> str:
         }
     )
     invite_link = response.json()["result"]["invite_link"]
-    print(invite_link)
 
     return invite_link
 
@@ -111,7 +115,6 @@ async def send_invite_link_to_user(chat_id: int, link: str, expire_date: datetim
                   separators=(',', ':'))
               }
     ).json()
-    print(response)
 
 
 async def send_error_message_to_user(chat_id: int) -> None:
@@ -153,7 +156,6 @@ async def send_success_message_to_user(chat_id: int, expire_date: datetime) -> N
               'text': f'Ваша подписка успешно продлена до <b>{expire_date.date().strftime("%d.%m.%Y")}</b>',
               }
     ).json()
-    print(response)
 
 
 async def get_body_params_pay_success(request: Request) -> ResponseResultPayment:
@@ -162,11 +164,9 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
 
     body = await request.body()
     bodyDict = prodamus.parse(body.decode())
-    print(f"DECODED BODY: {bodyDict}")
 
     # TODO доделать проверку и не возвращать если подделка
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
-    print(signIsGood)
 
     result = ResponseResultPayment(
         tg_id=bodyDict["order_num"],
@@ -177,7 +177,6 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
         date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S')    # '2024-12-26 22:08:59'
     )
 
-    print(result)
     return result
 
 
@@ -187,10 +186,8 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
 
     body = await request.body()
     bodyDict = prodamus.parse(body.decode())
-    print(f"DECODED BODY: {bodyDict}")
 
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
-    print(signIsGood)
 
     result = ResponseResultAutoPay(
         tg_id=bodyDict["order_num"],
@@ -201,6 +198,5 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
         action_code=bodyDict["subscription"]["action_code"]
     )
 
-    print(result)
     return result
 
