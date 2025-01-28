@@ -5,6 +5,7 @@ from loguru import logger
 
 from settings import settings
 
+logger.remove()
 logger.add("logs/bot.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
 
 

@@ -12,6 +12,7 @@ from routers.utils import convert_date
 from loguru import logger
 
 router = Router()
+logger.remove()
 logger.add("logs/bot.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
 
 

@@ -13,7 +13,10 @@ from settings import settings
 from schemas import User, ResponseResultPayment, ResponseResultAutoPay
 
 app = FastAPI()
+
+logger.remove()
 logger.add("fastapi.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
+logger.add("fastapi_errors.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}", level="ERROR")
 
 
 @app.get("/")
@@ -186,6 +189,13 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
 
     body = await request.body()
     bodyDict = prodamus.parse(body.decode())
+
+    # логирование request body
+    if "error_code" in bodyDict["subscription"]:
+        log_message = ""
+        for k, v in bodyDict.items():
+            log_message += f"{k}: {v}\n"
+        logger.error(log_message)
 
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
