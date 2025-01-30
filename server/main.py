@@ -211,6 +211,13 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
     body = await request.body()
     bodyDict = prodamus.parse(body.decode())
 
+    # логирование request body
+    if "error_code" in bodyDict["subscription"]:
+        log_message = ""
+        for k, v in bodyDict.items():
+            log_message += f"{k}: {v}\n"
+        logger.error(log_message)
+
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
     result = ResponseResultAutoPay(
