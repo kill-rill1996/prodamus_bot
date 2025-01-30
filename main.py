@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime
-from loguru import logger
 
 import aiogram as io
 from aiogram.client.default import DefaultBotProperties
@@ -10,7 +9,6 @@ from aiogram.types import BotCommand, BotCommandScopeDefault
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import apsched
-# from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from database.database import async_engine
 from database.tables import Base

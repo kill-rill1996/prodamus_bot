@@ -334,4 +334,5 @@ pip-selfcheck.json
 nohup.out
 
 *.sqlite3
+errors.txt
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,macos,venv

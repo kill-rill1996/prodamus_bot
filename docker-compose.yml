@@ -1,4 +1,4 @@
-ervices:
+services:
 #  bot:
 #    container_name: "bot"
 #    build: ./
@@ -24,8 +24,8 @@ ervices:
       - postgresdb
     ports:
       - 8000:8000
-#    volumes:
-#      - logs/fastapi.log:/app/fastapi.log
+    volumes:
+      - ./logs:/app/logs/
 
   postgresdb:
     image: postgres:13.1

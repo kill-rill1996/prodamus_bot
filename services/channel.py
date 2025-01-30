@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 import pytz
 import aiogram
@@ -5,7 +6,12 @@ from loguru import logger
 
 from settings import settings
 
-logger.add("logs/bot.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
+log_folder = "logs"
+if not os.path.exists(log_folder):
+    os.makedirs(log_folder)
+
+logger.remove()
+logger.add(f"{log_folder}/bot.log", format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {file}:{line} | {message}")
 
 
 async def generate_invite_link(bot: aiogram.Bot, name: str) -> str:

@@ -1,4 +1,5 @@
 import datetime
+import os
 
 from aiogram import Router, types
 from aiogram.filters import Command
@@ -12,7 +13,13 @@ from routers.utils import convert_date
 from loguru import logger
 
 router = Router()
-logger.add("logs/bot.log", format="{time:MMMM D, YYYY > HH:mm:ss} | {level} | {message} | {extra}")
+
+log_folder = "logs"
+if not os.path.exists(log_folder):
+    os.makedirs(log_folder)
+
+logger.remove()
+logger.add(f"{log_folder}/bot.log", format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {file}:{line} | {message}")
 
 
 @router.callback_query(lambda c: c.data == "back_to_start")
