@@ -63,7 +63,7 @@ async def auto_pay_subscription(request: Request):
     """Прием автоплатежа по подписке"""
     response = await get_body_params_auto_pay(request)
 
-    # проверка на успешный платеж
+    # неуспешные автоплатежи
     if not response.sing_is_good or response.error:
         user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
 
@@ -73,9 +73,20 @@ async def auto_pay_subscription(request: Request):
         else:
             logger.error(f"Автоматический платеж не прошел у пользователя с tg id {response.tg_id} | "
                            f"prodamus error: {response.error}")
-        await send_auto_pay_error_message_to_user(user)
 
-    else:
+        # оповещаем пользователя при первой неудачной попытке списания
+        if response.current_attempt == "1" and response.action_type == "notification":
+            await send_auto_pay_error_message_to_user(user)
+
+        # при последней неудачной попытке списания и отмене подписки в продамусе
+        if response.last_attempt == "yes" and response.action_code == "deactivation":
+            # деактивируем подписку TODO
+            # кикаем из канала TODO
+            # оповещаем пользователя, что подписка кончилась TODO
+            pass
+
+    # успешные автоплатежи
+    elif response.action_type == "action" and response.action_code == "auto_payment":
         user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
 
         # меняем дату окончания подписки
@@ -84,7 +95,6 @@ async def auto_pay_subscription(request: Request):
             response.date_last_payment,
             response.date_next_payment + timedelta(days=1, hours=1)  # запас по времени 1 день и 1 час
         )
-
         await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
         logger.info(f"Пользователь с tg id {user.tg_id}, телефон {user.phone} автоматически оплатил подписку")
 
@@ -157,10 +167,14 @@ async def send_auto_pay_error_message_to_user(user: UserRel) -> None:
     date_next_payment_phare = datetime.strftime(user.subscription[0].expire_date - timedelta(hours=2), '%d.%m %H:%M')
 
     msg = f"⚠️ Ваш доступ к каналу скоро пропадёт\n\n" \
-          f"Ваша подписка истекла {sub_expire_date_phrase} (МСК), однако списание с вашей карты не удалось." \
+          f"Ваша подписка истекает {sub_expire_date_phrase} (МСК), однако списание с вашей карты не удалось." \
           f"Чтобы избежать отключения из канала, пополните баланс до {date_next_payment_phare} (МСК).\n\n" \
           f"Если оплата не будет произведена во второй раз, наша система автоматически исключит вас " \
           f"и доступ к каналу будет закрыт."
+
+    msg = f"У пользователя tg_id: {user.tg_id}, phone: {user.phone} не удалось списать деньги 1 раз\n" \
+          f"подписка истекает {sub_expire_date_phrase} (МСК)\n" \
+          f"Чтобы избежать отключения из канала, пополните баланс до {date_next_payment_phare} (МСК)"
 
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
@@ -228,21 +242,36 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
         date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S'),  # '2024-12-26 22:08:59'
         action_code=None,
         error_code=None,
-        error=None
+        error=None,
+        current_attempt=None,
+        last_attempt=None,
+        action_type=None,
     )
 
-    # успешный платеж
-    if "action_code" in bodyDict["subscription"]:
-        try:
-            result.action_code = bodyDict["subscription"]["action_code"]
-        except Exception as e:
-            logger.error(f"Ошибка при обработке успешного рекуррентного платежа:\n\n{e}")
+    # type = "notification" / "action"
+    try:
+        result.action_type = bodyDict["subscription"]["type"]
+    except Exception:
+        logger.error(f"В запросе отсутствует ключ type\n{bodyDict}")
+
+    # для усп. платежей action_code='auto_payment',
+    # для деактивации action_code='deactivation'
+    try:
+        result.action_code = bodyDict["subscription"]["action_code"]
+    except Exception:
+        pass
+
+    try:
+        result.last_attempt = bodyDict["subscription"]["last_attempt"]
+    except Exception:
+        logger.error(f"В запросе отсутствует ключ last_attempt\n{bodyDict}")
 
     # ошибка при платеже
     if "error_code" in bodyDict["subscription"]:
         try:
             result.error_code = bodyDict["subscription"]["error_code"]
             result.error = bodyDict["subscription"]["error"]
+            result.current_attempt = bodyDict["subscription"]["current_attempt"]
         except Exception as e:
             logger.error(f"Ошибка при обработке НЕ успешного рекуррентного платежа:\n\n{e}")
 

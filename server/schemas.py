@@ -49,3 +49,6 @@ class ResponseResultAutoPay(BaseModel):
     action_code: str | None
     error_code: str | None
     error: str | None
+    current_attempt: str | None
+    last_attempt: str | None
+    action_type: str | None
