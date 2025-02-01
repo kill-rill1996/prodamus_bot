@@ -46,6 +46,6 @@ class ResponseResultAutoPay(BaseModel):
     customer_phone: str
     date_last_payment: datetime.datetime
     date_next_payment: datetime.datetime
-    action_code: str = None
-    error_code: str = None
-    error: str = None
+    action_code: str | None
+    error_code: str | None
+    error: str | None
