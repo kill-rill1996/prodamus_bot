@@ -47,3 +47,15 @@ class AsyncOrm:
             await session.execute(query)
             await session.flush()
             await session.commit()
+
+    @staticmethod
+    async def deactivate_subscription(user_id: int) -> None:
+        """Деактивация подписки у пользователя"""
+        async with async_session_factory() as session:
+            query = update(tables.Subscription)\
+                .where(tables.Subscription.user_id == user_id)\
+                .values(active=False, expire_date=None)
+
+            await session.execute(query)
+            await session.flush()
+            await session.commit()
