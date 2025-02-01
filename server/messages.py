@@ -6,6 +6,7 @@ import requests
 
 from schemas import User, UserRel
 from settings import settings
+from logger import logger
 
 
 async def generate_invite_link(user: User) -> str:
@@ -147,4 +148,6 @@ async def delete_user_from_channel(channel_id: int, user_id: int) -> None:
             'user_id': user_id,
         }
     ).json()
+
+    logger.info(f"Пользователь tg_id {user_id} удален из канала")
 
