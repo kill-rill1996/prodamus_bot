@@ -181,13 +181,6 @@ async def create_subscription_handler(message: types.CallbackQuery | types.Messa
                 reply_markup=kb.payment_keyboard(payment_link).as_markup()
             )
 
-    # web app
-    # await callback.message.edit_text(
-    #     "Для оформления подписки на месяц оплатите по ссылке ниже\n\n"
-    #     "При успешной оплате ссылка на вступление в канал придет в течение 5 минут",
-    #     reply_markup=kb.payment_keyboard_web_app(payment_link)
-    # )
-
 
 @router.message(Command("otmena"))
 @router.callback_query(lambda c: c.data == "callback_otmena")
@@ -243,7 +236,7 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
         logger.error(f"Ошибка при отмене подписки у пользователя с tg id {tg_id}\n"
-                       f"{response.json()}")
+                       f"{response.json}")
 
 
 @router.message(Command("vopros"))
