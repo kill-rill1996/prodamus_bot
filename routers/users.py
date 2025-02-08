@@ -235,10 +235,10 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
         logger.info(f"Пользователь с tg id {tg_id} отменил подписку")
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
-        logger.error(f"Ошибка при отмене подписки у пользователя с tg id {tg_id}\n"
-                       f"{response.content}\n\n"
-                       f"{response.text}"
-                     )
+        logger.error(
+            f"Ошибка при отмене подписки у пользователя с tg id {tg_id}\n"
+            f"status code: {response.status_code} | {response.text}"
+        )
 
 
 @router.message(Command("vopros"))
