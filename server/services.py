@@ -76,7 +76,7 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
     try:
         result.last_attempt = bodyDict["subscription"]["last_attempt"]
     except Exception:
-        logger.error(f"В запросе отсутствует ключ last_attempt\n{bodyDict}")
+        pass
 
     # ошибка при платеже
     if "error_code" in bodyDict["subscription"]:

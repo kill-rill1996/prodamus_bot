@@ -231,9 +231,9 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
     subscription_id = user_with_sub.subscription[0].id
 
     # отмена подписки через API Prodamus
-    status_code = prodamus.cancel_sub_by_user(user_with_sub.phone)
+    response = prodamus.cancel_sub_by_user(user_with_sub.phone)
 
-    if status_code == 200:
+    if response.status_code == 200:
         # отмена подписки в БД
         await AsyncOrm.disactivate_subscribe(subscription_id)
 
@@ -242,7 +242,8 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
         logger.info(f"Пользователь с tg id {tg_id} отменил подписку")
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
-        logger.warning(f"Ошибка при отмене подписки у пользователя с tg id {tg_id}")
+        logger.error(f"Ошибка при отмене подписки у пользователя с tg id {tg_id}\n"
+                       f"{response.json()}")
 
 
 @router.message(Command("vopros"))

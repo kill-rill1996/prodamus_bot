@@ -23,7 +23,7 @@ def get_pay_link(tg_id: int) -> str:
     return payment_link
 
 
-def cancel_sub_by_user(phone: str) -> int:
+def cancel_sub_by_user(phone: str) -> requests.Response:
     """Отмена подписки клиентом, ее невозможно будет уже включить только оформить повторно"""
     url = settings.pay_link + "rest/setActivity/"
 
@@ -37,7 +37,7 @@ def cancel_sub_by_user(phone: str) -> int:
     data["signature"] = signature
 
     response = requests.post(url, data=data)
-    return response.status_code
+    return response
 
 
 def sign(data, secret_key):
