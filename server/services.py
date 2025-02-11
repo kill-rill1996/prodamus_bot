@@ -23,6 +23,7 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
         payment_status=bodyDict["payment_status"],
         sing_is_good=signIsGood,
         customer_phone=bodyDict["customer_phone"],
+        profile_id=str(bodyDict["subscription"]["profile_id"]),
         date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M:%S'),    # '2024-12-26 22:08:59'
         date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S')    # '2024-12-26 22:08:59'
     )
@@ -48,6 +49,7 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
 
     result = ResponseResultAutoPay(
         tg_id=bodyDict["order_num"],
+        profile_id=str(bodyDict["subscription"]["profile_id"]),
         sing_is_good=signIsGood,
         customer_phone=bodyDict["customer_phone"],
         date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M:%S'),    # '2024-12-26 22:08:59'

@@ -25,12 +25,15 @@ class AsyncOrm:
             return user
 
     @staticmethod
-    async def update_subscribe(subscription_id: int, start_date: datetime.datetime, expire_date: datetime.datetime) -> None:
+    async def update_subscribe(subscription_id: int,
+                               start_date: datetime.datetime,
+                               expire_date: datetime.datetime,
+                               profile_id: str) -> None:
         """Оформление подписки"""
         async with async_session_factory() as session:
             query = update(tables.Subscription) \
                 .where(tables.Subscription.id == subscription_id) \
-                .values(active=True, start_date=start_date, expire_date=expire_date)
+                .values(active=True, start_date=start_date, expire_date=expire_date, profile_id=profile_id)
 
             await session.execute(query)
             await session.flush()

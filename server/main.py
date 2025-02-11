@@ -38,14 +38,17 @@ async def body(request: Request):
         await AsyncOrm.update_user_phone(user.id, response.customer_phone)
 
         # меняем дату окончания подписки
-        await AsyncOrm.update_subscribe(user.id,
-                                        response.date_last_payment,
-                                        response.date_next_payment + timedelta(days=1, hours=1))  # запас по вермени 1 день и 1 час
+        await AsyncOrm.update_subscribe(
+            subscription_id=user.subscription[0].id,
+            start_date=response.date_last_payment,
+            expire_date=response.date_next_payment + timedelta(days=1, hours=1),    # запас по времени 1 день и 1 час
+            profile_id=response.profile_id
+        )
 
         # новая подписка
         invite_link = await generate_invite_link(user)
         await send_invite_link_to_user(int(user.tg_id), invite_link, expire_date=response.date_next_payment)
-        logger.info(f"Пользователь с tg id {user.tg_id}, телефон {user.phone} оплатил подписку")
+        logger.info(f"Пользователь с tg id {user.tg_id}, телефон {response.customer_phone} купил подписку")
 
 
 # АВТОПЛАТЕЖ ПО ПОДПИСКЕ
@@ -84,9 +87,10 @@ async def auto_pay_subscription(request: Request):
 
         # меняем дату окончания подписки
         await AsyncOrm.update_subscribe(
-            user.subscription[0].id,
-            response.date_last_payment,
-            response.date_next_payment + timedelta(days=1, hours=1)  # запас по времени 1 день и 1 час
+            subscription_id=user.subscription[0].id,
+            start_date=response.date_last_payment,
+            expire_date=response.date_next_payment + timedelta(days=1, hours=1),  # запас по времени 1 день и 1 час
+            profile_id=response.profile_id
         )
         await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
         logger.info(f"Пользователь с tg id {user.tg_id}, телефон {user.phone} автоматически оплатил подписку")

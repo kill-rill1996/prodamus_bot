@@ -23,6 +23,7 @@ class Subscription(BaseModel):
     active: bool
     start_date: datetime.datetime | None
     expire_date: datetime.datetime | None
+    profile_id: str | None
 
 
 class SubscriptionRel(Subscription):
@@ -35,6 +36,7 @@ class ResponseResultPayment(BaseModel):
     payment_status: str
     sing_is_good: bool
     customer_phone: str
+    profile_id: str
     date_last_payment: datetime.datetime
     date_next_payment: datetime.datetime
 
@@ -42,6 +44,7 @@ class ResponseResultPayment(BaseModel):
 class ResponseResultAutoPay(BaseModel):
     """Данные из тела ответа по автоплатежу"""
     tg_id: str
+    profile_id: str
     sing_is_good: bool
     customer_phone: str
     date_last_payment: datetime.datetime

@@ -23,6 +23,7 @@ class Subscription(BaseModel):
     active: bool
     start_date: datetime.datetime | None
     expire_date: datetime.datetime | None
+    profile_id: str | None
 
 
 class SubscriptionRel(Subscription):
