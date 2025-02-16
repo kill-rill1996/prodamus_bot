@@ -223,8 +223,16 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
     user_with_sub = await AsyncOrm.get_user_with_subscription_by_tg_id(tg_id)
     subscription_id = user_with_sub.subscription[0].id
 
+    profile_id = user_with_sub.subscription[0].profile_id
+    if profile_id:
+        try:
+            profile_id = int(profile_id)
+        except Exception as e:
+            logger.error(f"Не удалось преобразовать profile_id в int пользователя tg_id: {user_with_sub.tg_id}, "
+                         f"phone: {user_with_sub.phone}")
+
     # отмена подписки через API Prodamus
-    response = prodamus.cancel_sub_by_user(user_with_sub.phone)
+    response = prodamus.cancel_sub_by_user(user_with_sub.phone, profile_id)
 
     if response.status_code == 200:
         # отмена подписки в БД
@@ -232,7 +240,10 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
 
         msg = ms.get_cancel_subscribe_message(user_with_sub.subscription[0].expire_date)
         await callback.message.edit_text(msg)
+
+        await AsyncOrm.add_operation(user_with_sub.tg_id, "UB_SUB", datetime.datetime.now())
         logger.info(f"Пользователь с tg id {tg_id} отменил подписку")
+
     else:
         await callback.message.edit_text("Произошла ошибка при обработке запроса. Повторите запрос позже.")
         logger.error(

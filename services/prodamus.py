@@ -23,13 +23,14 @@ def get_pay_link(tg_id: int) -> str:
     return payment_link
 
 
-def cancel_sub_by_user(phone: str) -> requests.Response:
+def cancel_sub_by_user(phone: str, profile_id: int | None) -> requests.Response:
     """Отмена подписки клиентом, ее невозможно будет уже включить только оформить повторно"""
     url = settings.pay_link + "rest/setActivity/"
 
     data = {
         "subscription": settings.sub_number,
         "customer_phone": phone,
+        "profile": profile_id,
         "active_user": 0
     }
 

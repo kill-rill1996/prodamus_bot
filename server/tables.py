@@ -47,3 +47,15 @@ class Subscription(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="subscription")
 
+
+class Operation(Base):
+    """Хранит действия пользователей подписки/отписки/покупки"""
+    __tablename__ = "operations"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    tg_id: Mapped[str] = mapped_column(index=True)
+    type: Mapped[str]
+    date: Mapped[datetime.datetime]
+
+
+

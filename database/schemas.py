@@ -30,4 +30,11 @@ class SubscriptionRel(Subscription):
     user: list["User"]
 
 
+class Operations(BaseModel):
+    """Операции пользователей подписки/отписки/покупки"""
+    tg_id: str
+    type: str
+    date: datetime.datetime
+
+
 

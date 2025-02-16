@@ -62,3 +62,17 @@ class AsyncOrm:
             await session.execute(query)
             await session.flush()
             await session.commit()
+
+    @staticmethod
+    async def add_operation(tg_id: str, operation_type: str, date: datetime.datetime) -> None:
+        """Создание операции пользователя BUY_SUB/AUTO_PAY/UN_SUB"""
+        async with async_session_factory() as session:
+            operation = tables.Operation(
+                tg_id=tg_id,
+                type=operation_type,
+                date=date
+            )
+            session.add(operation)
+
+            await session.flush()
+            await session.commit()

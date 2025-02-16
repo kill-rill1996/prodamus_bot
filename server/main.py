@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from fastapi import FastAPI, Request
 from starlette import status
@@ -22,7 +22,7 @@ async def root():
 
 # ПОКУПКА ПОДПИСКИ
 @app.post("/success_pay", status_code=status.HTTP_200_OK)
-async def body(request: Request):
+async def buy_subscription(request: Request):
     response = await get_body_params_pay_success(request)
 
     # проверка на успешный платеж
@@ -48,6 +48,9 @@ async def body(request: Request):
         # новая подписка
         invite_link = await generate_invite_link(user)
         await send_invite_link_to_user(int(user.tg_id), invite_link, expire_date=response.date_next_payment)
+
+        # учет операции
+        await AsyncOrm.add_operation(user.tg_id, "BUY_SUB", response.date_last_payment)
         logger.info(f"Пользователь с tg id {user.tg_id}, телефон {response.customer_phone} купил подписку")
 
 
@@ -93,6 +96,7 @@ async def auto_pay_subscription(request: Request):
             profile_id=response.profile_id
         )
         await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
+
+        # учет операции
+        await AsyncOrm.add_operation(user.tg_id, "AUTO_PAY", response.date_last_payment)
         logger.info(f"Пользователь с tg id {user.tg_id}, телефон {user.phone} автоматически оплатил подписку")
-
-
