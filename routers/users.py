@@ -241,7 +241,7 @@ async def confirmation_unsubscribe(callback: types.CallbackQuery) -> None:
         msg = ms.get_cancel_subscribe_message(user_with_sub.subscription[0].expire_date)
         await callback.message.edit_text(msg)
 
-        await AsyncOrm.add_operation(user_with_sub.tg_id, "UB_SUB", datetime.datetime.now())
+        await AsyncOrm.add_operation(user_with_sub.tg_id, "UN_SUB", datetime.datetime.now())
         logger.info(f"Пользователь с tg id {tg_id} отменил подписку")
 
     else:

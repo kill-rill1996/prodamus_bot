@@ -84,6 +84,9 @@ async def auto_pay_subscription(request: Request):
             # оповещаем пользователя, что подписка кончилась
             await send_error_message_to_user(int(user.tg_id))
 
+            # учитываем отмену подписки
+            await AsyncOrm.add_operation(user.tg_id, "AUTO_UN_SUB", datetime.now())
+
     # успешные автоплатежи
     elif response.action_type == "action" and response.action_code == "auto_payment":
         user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)

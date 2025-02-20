@@ -65,7 +65,12 @@ class AsyncOrm:
 
     @staticmethod
     async def add_operation(tg_id: str, operation_type: str, date: datetime.datetime) -> None:
-        """Создание операции пользователя BUY_SUB/AUTO_PAY/UN_SUB"""
+        """Создание операции пользователя
+            BUY_SUB - покупка подписки
+            AUTO_PAY - автопродление подпсики
+            UN_SUB - отмена подписки пользователем
+            AUTO_UN_SUB - отмена подписки автоматически (при неоплате)
+        """
         async with async_session_factory() as session:
             operation = tables.Operation(
                 tg_id=tg_id,
