@@ -30,9 +30,11 @@ def cancel_sub_by_user(phone: str, profile_id: int | None) -> requests.Response:
     data = {
         "subscription": settings.sub_number,
         "customer_phone": phone,
-        "profile": profile_id,
         "active_user": 0
     }
+
+    if profile_id:
+        data["profile"] = profile_id
 
     signature = sign(data, settings.pay_token)
     data["signature"] = signature
