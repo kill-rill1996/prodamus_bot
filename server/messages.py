@@ -97,17 +97,27 @@ async def send_auto_pay_error_message_to_user(user: UserRel) -> None:
     sub_expire_date_phrase = datetime.strftime(user.subscription[0].expire_date - timedelta(days=1, hours=1), '%d.%m в %H:%M')
     date_next_payment_phare = datetime.strftime(user.subscription[0].expire_date - timedelta(hours=2), '%d.%m %H:%M')
 
-    msg = f"⚠️ Ваш доступ к каналу скоро пропадёт\n\n" \
+    msg_for_client = f"⚠️ Ваш доступ к каналу скоро пропадёт\n\n" \
           f"Ваша подписка истекает <b>{sub_expire_date_phrase} (МСК)</b>, однако списание с вашей карты не удалось." \
           f"Чтобы избежать отключения из канала, пополните баланс до <b>{date_next_payment_phare} (МСК)</b>.\n\n" \
           f"Если оплата не будет произведена во второй раз, наша система автоматически исключит вас " \
           f"и доступ к каналу будет закрыт."
 
-    # TODO тестовое сообщение
-    msg = f"У пользователя tg_id: {user.tg_id}, phone: {user.phone} не удалось списать деньги 1 раз\n" \
+    msg_for_admin = f"У пользователя tg_id: {user.tg_id}, phone: {user.phone} не удалось списать деньги 1 раз\n" \
           f"подписка истекает {sub_expire_date_phrase} (МСК)\n" \
           f"Чтобы избежать отключения из канала, пополните баланс до {date_next_payment_phare} (МСК)"
 
+    # сообщение клиенту
+    response = requests.post(
+        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        data={
+            'chat_id': user.tg_id,
+            'parse_mode': "HTML",
+            'text': msg_for_client,
+        }
+    ).json()
+
+    # сообщение админу
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={
@@ -115,7 +125,7 @@ async def send_auto_pay_error_message_to_user(user: UserRel) -> None:
             # 'chat_id': user.tg_id,
             'chat_id': settings.admins[0],
             'parse_mode': "HTML",
-            'text': msg,
+            'text': msg_for_admin,
         }
     ).json()
 
