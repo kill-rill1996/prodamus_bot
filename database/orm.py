@@ -161,3 +161,16 @@ class AsyncOrm:
 
             await session.flush()
             await session.commit()
+
+    @staticmethod
+    async def get_unsub_operations() -> list[schemas.Operation]:
+        """Получение списка tg_id отписавшихся пользователей"""
+        async with async_session_factory() as session:
+            query = select(tables.Operation).where(tables.Operation.type == "UN_SUB")
+
+            result = await session.execute(query)
+            rows = result.scalars().all()
+
+            operations = [schemas.Operation.model_validate(row, from_attributes=True) for row in rows]
+
+            return operations

@@ -5,7 +5,7 @@ from settings import settings
 from database.schemas import UserRel
 
 
-def main_menu_keyboard(sub_is_active: bool) -> InlineKeyboardBuilder:
+def main_menu_keyboard(sub_is_active: bool, is_admin: bool) -> InlineKeyboardBuilder:
     """Клавиатура главного меню"""
     keyboard = InlineKeyboardBuilder()
     # показываем ссылку только подписчикам
@@ -13,6 +13,8 @@ def main_menu_keyboard(sub_is_active: bool) -> InlineKeyboardBuilder:
         keyboard.row(InlineKeyboardButton(text="Перейти в канал", url=settings.invite_link))
     keyboard.row(InlineKeyboardButton(text="Подписка", callback_data="callback_podpiska"))
     keyboard.row(InlineKeyboardButton(text="Задать вопрос", callback_data="callback_vopros"))
+    if is_admin:
+        keyboard.row(InlineKeyboardButton(text="🛠️ Администратор", callback_data="menu_administration"))
     keyboard.adjust(1)
 
     return keyboard
@@ -108,8 +110,6 @@ def yes_no_keyboard(need_back_button: bool = True) -> InlineKeyboardBuilder:
 
     return keyboard
 
-
-
 # def invite_link_keyboard(link: str) -> InlineKeyboardBuilder:
 #     """Клавиатура со ссылкой на вступление в канал"""
 #     keyboard = InlineKeyboardBuilder()
@@ -123,4 +123,20 @@ def cancel_sub_keyboard() -> InlineKeyboardBuilder:
     keyboard = InlineKeyboardBuilder()
     keyboard.row(InlineKeyboardButton(text="Отменить подписку", callback_data="cancel_subscription"))
 
+    return keyboard
+
+
+def admin_keyboard() -> InlineKeyboardBuilder:
+    """Клавиатура для администратора"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text="Рассылка 📢", callback_data="notify_users"))
+    keyboard.row(InlineKeyboardButton(text="<< назад", callback_data="main_menu"))
+
+    return keyboard
+
+
+def cancel_keyboard() -> InlineKeyboardBuilder:
+    """Клавиатура для отмены state"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text="❌ Отмена", callback_data="button_cancel"))
     return keyboard
