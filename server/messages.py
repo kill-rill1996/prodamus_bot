@@ -143,6 +143,8 @@ async def send_success_message_to_user(chat_id: int, expire_date: datetime) -> N
 
 async def delete_user_from_channel(channel_id: int, user_id: int) -> None:
     """Кик пользователя из канала"""
+    logger.info(f"Идет удаление пользователя из канала")
+
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "banChatMember"),
         data={
