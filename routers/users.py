@@ -31,6 +31,8 @@ async def start_handler(message: types.Message | types.CallbackQuery) -> None:
     tg_id = str(message.from_user.id)
     user = await AsyncOrm.get_user_by_tg_id(tg_id)
 
+    is_admin: bool = tg_id in settings.admins
+
     # уже зарегистрирован
     if user:
 
@@ -43,9 +45,9 @@ async def start_handler(message: types.Message | types.CallbackQuery) -> None:
 
             msg = "<b>Меню участника канала «Ежедневное питание | Sheva Nutrition»:</b>"
             if type(message) == types.Message:
-                await message.answer(msg, reply_markup=kb.main_menu_keyboard(sub_is_active=True).as_markup())
+                await message.answer(msg, reply_markup=kb.main_menu_keyboard(sub_is_active=True, is_admin=is_admin).as_markup())
             else:
-                await message.message.edit_text(msg, reply_markup=kb.main_menu_keyboard(sub_is_active=True).as_markup())
+                await message.message.edit_text(msg, reply_markup=kb.main_menu_keyboard(sub_is_active=True, is_admin=is_admin).as_markup())
 
         # подписка неактивна
         else:
