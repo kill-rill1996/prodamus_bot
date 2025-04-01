@@ -1,10 +1,8 @@
-from typing import BinaryIO, Any
-
 import aiogram
 from aiogram import Router, types, F
-from aiogram.types import InputMediaPhoto, InputMedia, ContentType as CT, InputMediaVideo
+from aiogram.types import ContentType as CT
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import StateFilter, Command
+from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.media_group import MediaGroupBuilder
 
@@ -56,7 +54,7 @@ async def notify_users(callback: types.CallbackQuery, state: FSMContext) -> None
 
 @router.message(SendMessagesFSM.text)
 @router.callback_query(SendMessagesFSM.text, lambda c: c.data == "button_skip_message")
-async def get_message_for_users(message: types.Message, state: FSMContext) -> None:
+async def get_message_for_users(message: types.Message | types.CallbackQuery, state: FSMContext) -> None:
     """Получение сообщения для пользователей и переход в SendMessagesFSM.media"""
     # редактирование предыдущего сообщения
     data = await state.get_data()
@@ -81,16 +79,21 @@ async def get_message_for_users(message: types.Message, state: FSMContext) -> No
             return
 
     # если нажали "Пропустить"
-    elif type(message) == types.CallbackQuery:
+    else:
         await state.update_data(text=None)
 
     # переходим в следующий state
     await state.set_state(SendMessagesFSM.media)
 
     # сообщение с предложением отправить медиа
-    msg = f"Отправьте все фото и видео, которые хотите приложить, одним сообщением\n" \
-          f"Если хотите отправить только текст нажмите \"Пропустить\""
-    prev_mess = await message.answer(msg, reply_markup=kb.skip_media_or_cancel_keyboard().as_markup())
+    msg = f"Отправьте <b>все фото и видео</b>, которые хотите приложить, <b>одним сообщением</b>\n\n" \
+          f"Если хотите отправить <b>только текст</b> нажмите \"Пропустить\""
+
+    if type(message) == types.Message:
+        prev_mess = await message.answer(msg, reply_markup=kb.skip_media_or_cancel_keyboard().as_markup())
+    else:
+        prev_mess = await message.message.answer(msg, reply_markup=kb.skip_media_or_cancel_keyboard().as_markup())
+
     await state.update_data(prev_mess=prev_mess)
 
 
@@ -98,7 +101,7 @@ media_router = Router()
 media_router.message.middleware.register(MediaMiddleware())
 
 
-@media_router.message(SendMessagesFSM.media, F.content_type.in_([CT.PHOTO, CT.VIDEO, CT.DOCUMENT, CT.AUDIO]))
+@media_router.message(SendMessagesFSM.media, F.content_type.in_([CT.PHOTO, CT.VIDEO, CT.DOCUMENT, CT.AUDIO, CT.VOICE]))
 @media_router.callback_query(SendMessagesFSM.media, lambda c: c.data == "button_skip_media")
 async def get_media_for_users_and_send_messages(message: types.Message | types.CallbackQuery,
                                                 state: FSMContext,
@@ -129,13 +132,17 @@ async def get_media_for_users_and_send_messages(message: types.Message | types.C
     user_group = data["user_group"]
     users_ids = await get_user_group_ids(user_group)
 
+    success_message_counter = 0
     for tg_id in users_ids:
 
         # если не было передано медиа
         if type(message) == types.CallbackQuery:
+
             # только текст
             if msg:
                 await bot.send_message(tg_id, msg)
+                success_message_counter += 1
+
             # нет текста и медиа
             else:
                 await wait_msg.edit_text("Невозможно отправить пустое сообщение")
@@ -144,19 +151,19 @@ async def get_media_for_users_and_send_messages(message: types.Message | types.C
         else:
             # если в медиа передали некорректные файлы
             if not album:
-                await message.answer("Переданы некорректные типы файлов")
+                await wait_msg.edit_text("Переданы некорректные типы файлов")
                 return
 
             # подготовка альбома
             media_group = MediaGroupBuilder(caption=msg)
 
-            for msg in album:
-                if msg.photo:
-                    file_id = msg.photo[-1].file_id
+            for obj in album:
+                if obj.photo:
+                    file_id = obj.photo[-1].file_id
                     media_group.add_photo(type="photo", media=file_id)
-                elif msg.video:
-                    obj_dict = msg.dict()
-                    file_id = obj_dict[msg.content_type]['file_id']
+                elif obj.video:
+                    obj_dict = obj.dict()
+                    file_id = obj_dict[obj.content_type]['file_id']
                     media_group.add_video(type="video", media=file_id)
                 else:
                     await message.answer("Переданы некорректные типы файлов")
@@ -164,71 +171,12 @@ async def get_media_for_users_and_send_messages(message: types.Message | types.C
 
             try:
                 await bot.send_media_group(tg_id, media_group.build())
+                success_message_counter += 1
+
             except Exception as e:
                 print(f"Не удалось отправить сообщение пользователю при оповещении {user_group} {tg_id}: {e}")
-                return
 
-    await wait_msg.edit_text("✅ Пользователи оповещены")
-
-#
-# @router.callback_query(SendMessagesFSM.media, lambda c: c.data == "button_skip_media")
-# async def send_messages_to_users(callback: types.CallbackQuery, state: FSMContext, bot: aiogram.Bot) -> None:
-#     """Рассылка сообщения для пользователей"""
-#     data = await state.get_data()
-#     await state.clear()
-#
-#     # редактирование предыдущего сообщения
-#     prev_mess = data["prev_mess"]
-#     try:
-#         await prev_mess.edit_text(prev_mess.text)
-#     except Exception:
-#         pass
-#
-#     # сообщение об осуществлении отправки
-#     wait_text = "⏳ Выполняется рассылка..."
-#     wait_msg = await callback.message.answer(wait_text)
-#
-#     msg = data["text"]
-#     photo_ids = data["photo_ids"]
-#     video_ids = data["video_ids"]
-#
-#     # подготовка альбома
-#     media_group = MediaGroupBuilder(caption=msg)
-#
-#     if photo_ids or video_ids:
-#         # добавляем в альбом фото
-#         for photo in photo_ids:
-#             media_group.add_photo(type="photo", media=photo)
-#
-#         # добавляем в альбом видео
-#         for video in video_ids:
-#             media_group.add_video(type="video", media=video)
-#
-#     # получаем list tg_id пользователей для рассылки
-#     user_group = data["user_group"]
-#     users_ids = await get_user_group_ids(user_group)
-#
-#     # рассылаем сообщения
-#     for tg_id in users_ids:
-#         try:
-#             # если все поля пустые
-#             if msg is None and not photo_ids and not video_ids:
-#                 await wait_msg.edit_text("Невозможно отправить пустое сообщение")
-#                 return
-#
-#             # отправка без фото и видео
-#             if msg and not photo_ids and not video_ids:
-#                 await bot.send_message(tg_id, msg)
-#
-#             # отправка с медиа
-#             if photo_ids or video_ids:
-#                 await bot.send_media_group(chat_id=tg_id, media=media_group.build())
-#
-#         except Exception as e:
-#             print(f"Не удалось отправить сообщение пользователю при оповещении {user_group} {tg_id}: {e}")
-#             return
-#
-#     await wait_msg.edit_text("✅ Пользователи оповещены")
+    await wait_msg.edit_text(f"✅ Оповещено пользователей: <b>{success_message_counter}</b>")
 
 
 @router.callback_query(lambda callback: callback.data == "button_cancel", StateFilter("*"))
@@ -252,30 +200,6 @@ async def get_user_group_ids(user_group: str) -> list[str]:
         users_ids = await AsyncOrm.get_unsub_tg_ids()
 
     return users_ids
-
-
-#
-# @media_router.message(F.content_type.in_([CT.PHOTO, CT.VIDEO, CT.DOCUMENT, CT.AUDIO]))
-# async def get_media(message: types.Message, album: list[types.Message]) -> None:
-#     if not album:
-#         await message.answer("Переданы некорректные типы файлов")
-#         return
-#
-#     media_group = []
-#
-#     for msg in album:
-#         if msg.photo:
-#             file_id = msg.photo[-1].file_id
-#             media_group.append(InputMediaPhoto(media=file_id))
-#         elif msg.video:
-#             obj_dict = msg.dict()
-#             file_id = obj_dict[msg.content_type]['file_id']
-#             media_group.append(InputMediaVideo(media=file_id))
-#         else:
-#             await message.answer("Переданы некорректные типы файлов")
-#             return
-#
-#     await message.answer_media_group(media_group)
 
 
 
