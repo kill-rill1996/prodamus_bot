@@ -1,12 +1,13 @@
 import aiogram
-from aiogram import Router, types, F
+from aiogram import Router, types, F, Bot
 from aiogram.types import ContentType as CT
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import StateFilter
+from aiogram.filters import StateFilter, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from middlewares.media import MediaMiddleware
+from settings import settings
 from routers import keyboards as kb
 from routers.fsm_states import SendMessagesFSM
 from database.orm import AsyncOrm
@@ -202,4 +203,25 @@ async def get_user_group_ids(user_group: str) -> list[str]:
     return users_ids
 
 
+@router.message(Command("secret_command"))
+async def send_messages_to_users(message: types.Message, bot: Bot) -> None:
+    """Рассылка сообщения по определенным id"""
 
+    if str(message.from_user.id) not in settings.admins:
+        await message.answer("Функция доступна только администраторам")
+        return
+
+    users_ids = ["938764138", "1041847886", "933093469", "694321884", "625805988", "529889046", "1721915702",
+                 "616455725", "345893866", "116115392", "1043596417"]
+
+    for user_id in users_ids:
+        link = await bot.create_chat_invite_link(settings.channel_id, member_limit=1)
+        msg = f"✅ Ваша подписка успешно продлена\n\n" \
+              f"Чтобы вступить в канал перейдите по ссылке ниже 👇\n\n{link.invite_link}"
+        try:
+            await bot.send_message(user_id, msg)
+
+        except Exception as e:
+            print(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
+
+    await message.answer(f"✅ {len(users_ids)} пользователей успешно оповещены")
