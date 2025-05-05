@@ -38,11 +38,16 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
     body = await request.body()
     bodyDict = prodamus.parse(body.decode())
 
-    # логирование request body
+    # логирование request body при ошибке
     if "error_code" in bodyDict["subscription"]:
-        log_message = ""
-        for k, v in bodyDict.items():
-            log_message += f"{k}: {v}\n"
+
+        try:
+            log_message = f"Ошибка при автоплатеже польз. tg_id {bodyDict['order_num']} " \
+                          f"profile_id {bodyDict['subscription']['profile_id']}: {bodyDict['subscription']['error']}"
+
+        except Exception as e:
+            log_message = f"Ошибка при записи лога в автоплатеже: {e}"
+
         logger.error(log_message)
 
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
