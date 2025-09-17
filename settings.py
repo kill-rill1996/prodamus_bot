@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     pay_link: str
     pay_token: str
     invite_link: str
+    trial_period: int = 3
+    trial_discount: int = 899
 
     db: Database = Database()
 

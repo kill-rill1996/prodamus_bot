@@ -172,8 +172,14 @@ async def create_subscription_handler(message: types.CallbackQuery | types.Messa
                 reply_markup=kb.payment_keyboard(need_back_button=True, need_pay_link=False).as_markup()
             )
 
+    # для первой подписки или при продлении законченной подписки
     else:
-        payment_link = prodamus.get_pay_link(message.from_user.id)
+        if user.subscription[0].trial_used:
+            is_trial = False
+        else:
+            is_trial = True
+
+        payment_link = prodamus.get_pay_link(message.from_user.id, is_trial)
 
         if type(message) == types.Message:
             await message.answer(

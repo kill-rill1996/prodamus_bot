@@ -24,6 +24,7 @@ class Subscription(BaseModel):
     start_date: datetime.datetime | None
     expire_date: datetime.datetime | None
     profile_id: str | None
+    trial_used: bool | None = False
 
 
 class SubscriptionRel(Subscription):

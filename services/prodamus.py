@@ -3,7 +3,7 @@ import requests
 from settings import settings
 
 
-def get_pay_link(tg_id: int) -> str:
+def get_pay_link(tg_id: int, is_trial: bool = False) -> str:
     """Получение ссылки на оплату"""
     link_form = settings.pay_link
 
@@ -13,10 +13,11 @@ def get_pay_link(tg_id: int) -> str:
         "customer_extra": "Информация об оплачиваемой подписке",
         "do": "link",
         "sys": "",
-        # "products[0][name]": "Подписка на 1 мес.",
-        # "products[0][price]": 50,
-        # "products[0][quantity]": 1,
     }
+
+    if is_trial:
+        data["subscription_demo_period"] = settings.trial_period
+        data["discount_value"] = settings.trial_discount
 
     response = requests.get(link_form, params=data)
     payment_link = response.content.decode()

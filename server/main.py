@@ -42,7 +42,8 @@ async def buy_subscription(request: Request):
             subscription_id=user.subscription[0].id,
             start_date=response.date_last_payment,
             expire_date=response.date_next_payment + timedelta(days=1, hours=1),    # запас по времени 1 день и 1 час
-            profile_id=response.profile_id
+            profile_id=response.profile_id,
+            trial_used=True
         )
 
         # новая подписка
@@ -96,7 +97,8 @@ async def auto_pay_subscription(request: Request):
             subscription_id=user.subscription[0].id,
             start_date=response.date_last_payment,
             expire_date=response.date_next_payment + timedelta(days=1, hours=1),  # запас по времени 1 день и 1 час
-            profile_id=response.profile_id
+            profile_id=response.profile_id,
+            trial_used=True
         )
         await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
 

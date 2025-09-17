@@ -28,12 +28,14 @@ class AsyncOrm:
     async def update_subscribe(subscription_id: int,
                                start_date: datetime.datetime,
                                expire_date: datetime.datetime,
-                               profile_id: str) -> None:
+                               profile_id: str,
+                               trial_used: bool) -> None:
         """Оформление подписки"""
         async with async_session_factory() as session:
             query = update(tables.Subscription) \
                 .where(tables.Subscription.id == subscription_id) \
-                .values(active=True, start_date=start_date, expire_date=expire_date, profile_id=profile_id)
+                .values(active=True, start_date=start_date, expire_date=expire_date, profile_id=profile_id,
+                        trial_used=trial_used)
 
             await session.execute(query)
             await session.flush()

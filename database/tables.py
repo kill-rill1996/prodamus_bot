@@ -43,6 +43,7 @@ class Subscription(Base):
     start_date: Mapped[datetime.datetime] = mapped_column(nullable=True)
     expire_date: Mapped[datetime.datetime] = mapped_column(nullable=True)
     profile_id: Mapped[str] = mapped_column(nullable=True, default=None)
+    trial_used: Mapped[bool] = mapped_column(default=False, nullable=False)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     user: Mapped["User"] = relationship(back_populates="subscription")
