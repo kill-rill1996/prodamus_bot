@@ -273,3 +273,9 @@ async def vopros_handler(message: types.Message | types.CallbackQuery) -> None:
         await message.answer(msg)
     else:
         await message.message.edit_text(msg, reply_markup=kb.back_keyboard("main_menu").as_markup())
+
+
+@router.message(Command("demo"))
+async def demo_subscription(message: types.Message) -> None:
+    payment_link = prodamus.get_pay_link_with_demo_period(message.from_user.id)
+    await message.answer(payment_link)
