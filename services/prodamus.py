@@ -24,26 +24,6 @@ def get_pay_link(tg_id: int, is_trial: bool = False) -> str:
     return payment_link
 
 
-def get_pay_link_with_demo_period(tg_id: int) -> str:
-    """Получение ссылки на оплату"""
-    link_form = settings.pay_link
-
-    data = {
-        "order_id": tg_id,
-        "subscription": 2504059,
-        "customer_extra": "Информация об оплачиваемой подписке",
-        "do": "link",
-        "sys": "",
-        "subscription_demo_period": 1
-        # "products[0][name]": "Подписка на 1 мес.",
-        # "products[0][price]": 50,
-        # "products[0][quantity]": 1,
-    }
-
-    response = requests.get(link_form, params=data)
-    payment_link = response.content.decode()
-    return payment_link
-
 def cancel_sub_by_user(phone: str, profile_id: int | None) -> requests.Response:
     """Отмена подписки клиентом, ее невозможно будет уже включить только оформить повторно"""
     url = settings.pay_link + "rest/setActivity/"
