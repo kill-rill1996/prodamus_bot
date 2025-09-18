@@ -47,6 +47,7 @@ class ResponseResultPayment(BaseModel):
     profile_id: str
     date_last_payment: datetime.datetime
     date_next_payment: datetime.datetime
+    is_trial: bool = None
 
 
 class ResponseResultAutoPay(BaseModel):

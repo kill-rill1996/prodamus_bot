@@ -27,10 +27,11 @@ async def generate_invite_link(user: User) -> str:
     return invite_link
 
 
-async def send_invite_link_to_user(chat_id: int, link: str, expire_date: datetime) -> None:
+async def send_invite_link_to_user(chat_id: int, link: str, expire_date: datetime, is_trial: bool = False) -> None:
     """Отправка сообщения пользователю после оплаты"""
     text = "Статус подписки на закрытый канал с ежедневным питанием от Шевы:\n\n" \
-           f"✅ <b>Активна</b>\n\nСледующее списание - <b>{expire_date.date().strftime('%d.%m.%Y')}</b>\n" \
+           f"✅ <b>Активна</b> {f'(активирован пробный период на <b>{settings.trial_period}</b> дня)' if is_trial else ''}" \
+           f"\n\nСледующее списание - <b>{expire_date.date().strftime('%d.%m.%Y')}</b>\n" \
            "<i>*Вы всегда можете отменить подписку через меню бота</i>\n\n" \
            "Ваша ссылка на вступление в закрытый канал\n\n" \
            "↓↓↓"

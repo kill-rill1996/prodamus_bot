@@ -48,6 +48,12 @@ async def buy_subscription(request: Request):
 
         # новая подписка
         invite_link = await generate_invite_link(user)
+
+        # проверяем подписка с пробным периодом или без
+        if response.is_trial:
+            # TODO добавить новое сообщение
+            pass
+
         await send_invite_link_to_user(int(user.tg_id), invite_link, expire_date=response.date_next_payment)
 
         # учет операции

@@ -18,6 +18,9 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
 
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
+    # проверяем подписка с демо периодом или без
+    is_trial: bool = True if bodyDict["subscription_demo_period"] else False
+
     result = ResponseResultPayment(
         tg_id=bodyDict["order_num"],
         payment_status=bodyDict["payment_status"],
@@ -25,7 +28,8 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
         customer_phone=bodyDict["customer_phone"],
         profile_id=str(bodyDict["subscription"]["profile_id"]),
         date_last_payment=datetime.strptime(bodyDict["subscription"]["date_last_payment"], '%Y-%m-%d %H:%M:%S'),    # '2024-12-26 22:08:59'
-        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S')    # '2024-12-26 22:08:59'
+        date_next_payment=datetime.strptime(bodyDict["subscription"]["date_next_payment"], '%Y-%m-%d %H:%M:%S'),    # '2024-12-26 22:08:59'
+        is_trial=is_trial
     )
 
     return result

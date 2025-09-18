@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     sub_number: int
     pay_link: str
     pay_token: str
+    trial_period: int = 3
 
     db: Database = Database()
 
