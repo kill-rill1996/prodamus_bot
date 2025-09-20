@@ -46,15 +46,15 @@ async def buy_subscription(request: Request):
             trial_used=True
         )
 
-        # новая подписка
+        # генерируем ссылку на вступление в группу
         invite_link = await generate_invite_link(user)
 
-        # проверяем подписка с пробным периодом или без
-        if response.is_trial:
-            # TODO добавить новое сообщение
-            pass
-
-        await send_invite_link_to_user(int(user.tg_id), invite_link, expire_date=response.date_next_payment)
+        await send_invite_link_to_user(
+            int(user.tg_id),
+            invite_link,
+            expire_date=response.date_next_payment,
+            is_trial=response.is_trial
+        )
 
         # учет операции
         await AsyncOrm.add_operation(user.tg_id, "BUY_SUB", response.date_last_payment)
