@@ -174,10 +174,13 @@ async def create_subscription_handler(message: types.CallbackQuery | types.Messa
 
     # для первой подписки или при продлении законченной подписки
     else:
-        if user.subscription[0].trial_used:
-            is_trial = False
-        else:
-            is_trial = True
+        # TODO на время не работающей подписи
+        # if user.subscription[0].trial_used:
+        #     is_trial = False
+        # else:
+        #     is_trial = True
+
+        is_trial = False
 
         payment_link = prodamus.get_pay_link(message.from_user.id, is_trial)
 
