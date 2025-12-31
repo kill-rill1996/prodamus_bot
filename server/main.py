@@ -28,7 +28,9 @@ async def buy_subscription(request: Request):
     # проверка на успешный платеж
     if not(response.sing_is_good and response.payment_status == "success"):
         await buy_subscription_error(int(response.tg_id))
-        logger.error(f"Не прошла покупка подписки у пользователя с tg id {response.tg_id}")
+        logger.error(f"Не прошла покупка подписки у пользователя с tg id {response.tg_id}\n"
+                     f"Статус подписи: {response.sing_is_good}\n"
+                     f"RESPONSE:\n{response}")
 
     # успешная оплата
     else:
