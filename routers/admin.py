@@ -273,6 +273,9 @@ async def send_invite_to_user(message: types.Message, state: FSMContext, bot: Bo
             reply_markup=keyboard.as_markup()
         )
 
+        # Оповещаем админа
+        await message.answer("Приглашение в группу успешно отправлено пользователю ")
+
     except Exception as e:
         await message.answer(f"Не удалось отправить сообщение пользователю: {e}")
 
