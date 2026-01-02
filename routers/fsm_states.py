@@ -9,3 +9,5 @@ class SendMessagesFSM(StatesGroup):
 class MediaFSM(StatesGroup):
     media = State()
 
+class AddUser(StatesGroup):
+    tg_id = State()

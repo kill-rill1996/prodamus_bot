@@ -9,7 +9,8 @@ from logger import logger
 
 from orm import AsyncOrm
 from messages import send_error_message_to_user, send_invite_link_to_user, generate_invite_link, \
-    send_auto_pay_error_message_to_user, send_success_message_to_user, delete_user_from_channel, buy_subscription_error
+    send_auto_pay_error_message_to_user, send_success_message_to_user, delete_user_from_channel, buy_subscription_error, \
+    send_error_message_to_admin
 from services import get_body_params_pay_success, get_body_params_auto_pay
 
 app = FastAPI()
@@ -31,6 +32,10 @@ async def buy_subscription(request: Request):
         logger.error(f"Не прошла покупка подписки у пользователя с tg id {response.tg_id}\n"
                      f"Статус подписи: {response.sing_is_good}\n"
                      f"RESPONSE:\n{response}")
+
+        # Оповещение администраторов о проблеме
+        await send_error_message_to_admin(420551454, response)
+        await send_error_message_to_admin(714371204, response)
 
     # успешная оплата
     else:
@@ -75,6 +80,7 @@ async def auto_pay_subscription(request: Request):
 
         if not response.sing_is_good:
             logger.error(f"Автоплатеж не прошел tg_id {response.tg_id} | ошибка проверки подписи")
+
         else:
             logger.error(f"Автоплатеж платеж не прошел tg id {response.tg_id} | prodamus error: {response.error}")
 

@@ -4,12 +4,14 @@ from aiogram.types import ContentType as CT
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import StateFilter, Command
 from aiogram.fsm.context import FSMContext
+from aiogram.utils import keyboard
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from middlewares.media import MediaMiddleware
+from routers.keyboards import cancel_keyboard, invite_to_channel_keyboard
 from settings import settings
 from routers import keyboards as kb
-from routers.fsm_states import SendMessagesFSM
+from routers.fsm_states import SendMessagesFSM, AddUser
 from database.orm import AsyncOrm
 
 router = Router()
@@ -225,3 +227,58 @@ async def send_messages_to_users(message: types.Message, bot: Bot) -> None:
             print(f"Не удалось отправить сообщение пользователю {user_id}: {e}")
 
     await message.answer(f"✅ {len(users_ids)} пользователей успешно оповещены")
+
+
+# TODO для приглашения пользователя в канал в ручную в случае неисправностей
+@router.message(Command("add_user"))
+async def add_user_in_channel(message: types.Message, state: FSMContext) -> None:
+    """Приглашение пользователя в канал в ручную"""
+    # Проверка на админа
+    admin_tg_id = str(message.from_user.id)
+    if admin_tg_id not in ["420551454", "714371204"]:
+        await message.answer("Функция доступна только администраторам")
+        return
+
+    await state.set_state(AddUser.tg_id)
+    keyboard = cancel_keyboard()
+    await message.answer("Пришлите tg id пользователя для приглашения в канал",
+                         reply_markup=keyboard.as_markup())
+
+
+@router.message(StateFilter(AddUser.tg_id))
+async def send_invite_to_user(message: types.Message, state: FSMContext, bot: Bot) -> None:
+    # Получаем tg id пользователя для отправки приглашения
+    try:
+        user_tg_id = str(message.text)
+    except Exception as e:
+        await message.answer(f"Ошибка при обработке tg id, проверьте правильность написания: {e}")
+        return
+
+    # Очищаем стейт
+    await state.clear()
+
+    try:
+        link = await bot.create_chat_invite_link(settings.channel_id, member_limit=1)
+        text = "Статус подписки на закрытый канал с ежедневным питанием от Шевы:\n\n" \
+               f"✅ <b>Активна</b>\n" \
+               "<i>*Вы всегда можете отменить подписку через меню бота</i>\n\n" \
+               "Ваша ссылка на вступление в закрытый канал\n\n" \
+               "↓↓↓"
+        keyboard = invite_to_channel_keyboard(link.invite_link)
+
+        # Отправляем сообщение пользователю
+        await bot.send_message(
+            user_tg_id,
+            text,
+            reply_markup=keyboard.as_markup()
+        )
+
+    except Exception as e:
+        await message.answer(f"Не удалось отправить сообщение пользователю: {e}")
+
+
+
+@router.callback_query(lambda callback: callback.data == "button_cancel", StateFilter(AddUser.tg_id))
+async def cancel_handler(callback: types.CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("Действие отменено")

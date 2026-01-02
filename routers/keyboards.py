@@ -159,6 +159,11 @@ def skip_media_or_cancel_keyboard() -> InlineKeyboardBuilder:
     return keyboard
 
 
+def invite_to_channel_keyboard(invite_link: str) -> InlineKeyboardBuilder:
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text="🔗Вступить в канал", url=invite_link))
+    return keyboard
+
 def cancel_keyboard() -> InlineKeyboardBuilder:
     """Клавиатура для отмены state"""
     keyboard = InlineKeyboardBuilder()
