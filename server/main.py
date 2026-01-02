@@ -34,8 +34,8 @@ async def buy_subscription(request: Request):
                      f"RESPONSE:\n{response}")
 
         # Оповещение администраторов о проблеме
-        await send_error_message_to_admin(420551454, response)
-        await send_error_message_to_admin(714371204, response)
+        await send_error_message_to_admin(420551454, "Новая подписка", response)
+        await send_error_message_to_admin(714371204,"Новая подписка", response)
 
     # успешная оплата
     else:
@@ -80,6 +80,10 @@ async def auto_pay_subscription(request: Request):
 
         if not response.sing_is_good:
             logger.error(f"Автоплатеж не прошел tg_id {response.tg_id} | ошибка проверки подписи")
+
+            # Оповещение администраторов о проблеме
+            await send_error_message_to_admin(420551454, "Продление", response)
+            await send_error_message_to_admin(714371204, "Продление", response)
 
         else:
             logger.error(f"Автоплатеж платеж не прошел tg id {response.tg_id} | prodamus error: {response.error}")

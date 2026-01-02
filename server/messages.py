@@ -167,7 +167,7 @@ async def delete_user_from_channel(channel_id: int, user_id: int) -> None:
 
 async def send_error_message_to_admin(chat_id: int, buy_type: str, response) -> None:
     """Отправка сообщения о неудачном платеже администратору"""
-    msg = f"⛔️ Ошибка при оплате подписки (скорее всего подписи).\n\n{response}"
+    msg = f"⛔️ Ошибка при оплате подписки (скорее всего подписи)\nТип покупки: {buy_type}\n\nRESPONSE\n{response}"
 
     response = requests.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
