@@ -28,14 +28,58 @@ async def buy_subscription(request: Request):
 
     # проверка на успешный платеж
     if not(response.sing_is_good and response.payment_status == "success"):
-        await buy_subscription_error(int(response.tg_id))
+
+        # при неправильной подписи
+        if not response.sing_is_good:
+            # TODO автовнесение в БД (демо режим)
+            user = await AsyncOrm.get_user_with_subscription_by_tg_id(response.tg_id)
+
+            # обновляем телефон
+            await AsyncOrm.update_user_phone(user.id, response.customer_phone)
+
+            # меняем дату окончания подписки
+            try:
+                await AsyncOrm.update_subscribe(
+                    subscription_id=user.subscription[0].id,
+                    start_date=response.date_last_payment,
+                    expire_date=response.date_next_payment + timedelta(days=1, hours=1),  # запас по времени 1 день и 1 час
+                    profile_id=response.profile_id,
+                    trial_used=True
+                )
+            except Exception as e:
+                logger.error(f"Ошибка при заполнении дб в ДЕМО режиме: {e}")
+
+
+            # генерируем ссылку на вступление в группу
+            invite_link = await generate_invite_link(user)
+
+            await send_invite_link_to_user(
+                int(user.tg_id),
+                invite_link,
+                expire_date=response.date_next_payment,
+                is_trial=response.is_trial
+            )
+
+            # учет операции
+            await AsyncOrm.add_operation(user.tg_id, "BUY_SUB", response.date_last_payment)
+            logger.info(f"Пользователь с tg id {user.tg_id}, телефон {response.customer_phone} купил подписку")
+
+            # Оповещение администраторов о проблеме
+            await send_error_message_to_admin("Новая подписка", response)
+
+            logger.error(f"Не прошла покупка подписки у пользователя с tg id {response.tg_id}\n"
+                         f"Статус подписи: {response.sing_is_good}\n"
+                         f"RESPONSE:\n{response}")
+
+
+        # при неудачном списании
+        elif response.payment_status != "success":
+            # оповещаем клиента
+            await buy_subscription_error(int(response.tg_id))
+
         logger.error(f"Не прошла покупка подписки у пользователя с tg id {response.tg_id}\n"
                      f"Статус подписи: {response.sing_is_good}\n"
                      f"RESPONSE:\n{response}")
-
-        # Оповещение администраторов о проблеме
-        await send_error_message_to_admin(420551454, "Новая подписка", response)
-        await send_error_message_to_admin(714371204,"Новая подписка", response)
 
     # успешная оплата
     else:
@@ -82,8 +126,7 @@ async def auto_pay_subscription(request: Request):
             logger.error(f"Автоплатеж не прошел tg_id {response.tg_id} | ошибка проверки подписи")
 
             # Оповещение администраторов о проблеме
-            await send_error_message_to_admin(420551454, "Продление", response)
-            await send_error_message_to_admin(714371204, "Продление", response)
+            await send_error_message_to_admin("Продление", response)
 
         else:
             logger.error(f"Автоплатеж платеж не прошел tg id {response.tg_id} | prodamus error: {response.error}")

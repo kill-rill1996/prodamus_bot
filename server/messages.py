@@ -165,14 +165,15 @@ async def delete_user_from_channel(channel_id: int, user_id: int) -> None:
     logger.info(f"Пользователь tg_id {user_id} удален из канала")
 
 
-async def send_error_message_to_admin(chat_id: int, buy_type: str, response) -> None:
+async def send_error_message_to_admin(buy_type: str, response) -> None:
     """Отправка сообщения о неудачном платеже администратору"""
-    msg = f"⛔️ Ошибка при оплате подписки (скорее всего подписи)\nТип покупки: {buy_type}\n\nRESPONSE\n{response}"
+    msg = f"⛔️ Ошибка проверки подписи при оплате подписки\nТип покупки: <b>{buy_type}</b>\n\nRESPONSE\n{response}"
 
-    response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
-        data={'chat_id': chat_id,
-              'parse_mode': "HTML",
-              'text': msg,
-              }
-    ).json()
+    for chat_id in [420551454, 714371204]:
+        response = requests.post(
+            url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+            data={'chat_id': chat_id,
+                  'parse_mode': "HTML",
+                  'text': msg,
+                  }
+        ).json()
