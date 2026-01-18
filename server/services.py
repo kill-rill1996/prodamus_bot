@@ -49,9 +49,9 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
     bodyDict = prodamus.parse(body.decode())
 
     # Проверяем подпись
-    signIsGood = verify(request)
+    # signIsGood = verify(request)
 
-    # signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
+    signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
     # проверяем подписка с демо периодом или без
     is_trial: bool = True if bodyDict.get("subscription_demo_period") else False
