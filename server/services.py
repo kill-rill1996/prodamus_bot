@@ -94,14 +94,14 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
 
         logger.error(log_message)
 
-    # signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
+    signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
     # Проверяем подпись
-    try:
-        signIsGood = await verify(request)
-    except Exception as e:
-        signIsGood = False
-        logger.error(f"Ошибка при обработке подписи: {e}")
+    # try:
+    #     signIsGood = await verify(request)
+    # except Exception as e:
+    #     signIsGood = False
+    #     logger.error(f"Ошибка при обработке подписи: {e}")
 
 
     result = ResponseResultAutoPay(
