@@ -35,10 +35,15 @@ def deep_int_to_string(dictionary):
 
 
 async def verify(request):
-    body = await request.body()
+    body = await request.json()
     request_sign = sign(body, settings.pay_token)
     return request.headers["sign"] == request_sign
 
+
+async def verify_dict(body: dict, str_sign: str) -> bool:
+    """Проверка подписи с помощью сторонней библиотеки для подготовки тела запроса"""
+    request_sign = sign(body, settings.pay_token)
+    return str_sign == request_sign
 
 
 async def get_body_params_pay_success(request: Request) -> ResponseResultPayment:
@@ -50,11 +55,11 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
     bodyDict = prodamus.parse(body.decode())
 
     # Проверяем подпись
-    # try:
-    #     signIsGood = await verify(request)
-    # except Exception as e:
-    #     signIsGood = False
-    #     logger.error(f"Ошибка при обработке подписи: {e}")
+    try:
+        signIsGood_test = await verify_dict(bodyDict, request.headers["sign"])
+        logger.info(f"Проверка подписи с помощью prodamus.parse, результат sign verify: {signIsGood_test}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке подписи с помощью prodamus.parse: {e}")
 
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
@@ -97,11 +102,11 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
     # Проверяем подпись
-    # try:
-    #     signIsGood = await verify(request)
-    # except Exception as e:
-    #     signIsGood = False
-    #     logger.error(f"Ошибка при обработке подписи: {e}")
+    try:
+        signIsGood_test = await verify(request)
+        logger.info(f"Проверка подписи с помощью request.json, результат sign verify: {signIsGood_test}")
+    except Exception as e:
+        logger.error(f"Ошибка при обработке подписи request.json: {e}")
 
 
     result = ResponseResultAutoPay(
