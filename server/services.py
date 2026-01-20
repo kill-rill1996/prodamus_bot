@@ -56,12 +56,13 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
 
     # Проверяем подпись
     try:
-        signIsGood_test = await verify_dict(bodyDict, request.headers["sign"])
-        logger.info(f"Проверка подписи с помощью prodamus.parse, результат sign verify: {signIsGood_test}")
+        signIsGood = await verify_dict(bodyDict, request.headers["sign"])
+        logger.info(f"Проверка подписи с помощью prodamus.parse, результат sign verify: {signIsGood}")
     except Exception as e:
         logger.error(f"Ошибка при обработке подписи с помощью prodamus.parse: {e}")
+        signIsGood = False
 
-    signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
+    # signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
 
     # проверяем подписка с демо периодом или без
     is_trial: bool = True if bodyDict.get("subscription_demo_period") else False
@@ -100,14 +101,6 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
         logger.error(log_message)
 
     signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
-
-    # Проверяем подпись
-    try:
-        signIsGood_test = await verify(request)
-        logger.info(f"Проверка подписи с помощью request.json, результат sign verify: {signIsGood_test}")
-    except Exception as e:
-        logger.error(f"Ошибка при обработке подписи request.json: {e}")
-
 
     result = ResponseResultAutoPay(
         tg_id=bodyDict["order_num"],
