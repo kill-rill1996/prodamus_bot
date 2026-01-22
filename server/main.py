@@ -49,7 +49,6 @@ async def buy_subscription(request: Request):
             except Exception as e:
                 logger.error(f"Ошибка при заполнении дб в ДЕМО режиме: {e}")
 
-
             # генерируем ссылку на вступление в группу
             invite_link = await generate_invite_link(user)
 
