@@ -126,6 +126,7 @@ def admin_keyboard() -> InlineKeyboardBuilder:
     """Клавиатура для администратора"""
     keyboard = InlineKeyboardBuilder()
     keyboard.row(InlineKeyboardButton(text="📢 Рассылка", callback_data="notify_users"))
+    keyboard.row(InlineKeyboardButton(text="🗂️ Пользователи", callback_data="get_excel_users"))
     keyboard.row(InlineKeyboardButton(text="<< назад", callback_data="main_menu"))
 
     return keyboard

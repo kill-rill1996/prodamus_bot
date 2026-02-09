@@ -2,7 +2,7 @@ import datetime
 from typing import List
 
 import pytz
-from sqlalchemy import select, update
+from sqlalchemy import select, update, or_, and_
 from sqlalchemy.orm import joinedload
 
 from database.database import async_engine, async_session_factory
@@ -70,6 +70,30 @@ class AsyncOrm:
             user = schemas.UserRel.model_validate(row, from_attributes=True)
 
             return user
+
+    @staticmethod
+    async def get_all_users_with_active_subscription() -> list[schemas.UserRel]:
+        """Получение всех пользователей с активной подпиской или с неактивной подпиской,
+        но с НЕ пустым expire_date"""
+        async with async_session_factory() as session:
+            query = select(tables.User).options(joinedload(tables.User.subscription)).\
+                join(tables.User.subscription).where(
+                or_(
+                    # Активная подписка
+                    tables.Subscription.active == True,
+                    # ИЛИ неактивная подписка, но с expire_date не пустым
+                    and_(
+                        tables.Subscription.active == False,
+                        tables.Subscription.expire_date.is_not(None)
+                    )
+                )
+            )
+
+            result = await session.execute(query)
+            users = result.unique().scalars().all()
+
+            return [schemas.UserRel.model_validate(user, from_attributes=True) for user in users]
+
 
     @staticmethod
     async def disactivate_subscribe(subscription_id: int) -> None:

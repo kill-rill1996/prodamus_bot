@@ -1,6 +1,6 @@
 import aiogram
 from aiogram import Router, types, F, Bot
-from aiogram.types import ContentType as CT
+from aiogram.types import ContentType as CT, FSInputFile
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.filters import StateFilter, Command
 from aiogram.fsm.context import FSMContext
@@ -13,6 +13,7 @@ from settings import settings
 from routers import keyboards as kb
 from routers.fsm_states import SendMessagesFSM, AddUser
 from database.orm import AsyncOrm
+from routers.utils import generate_excel_file
 
 router = Router()
 
@@ -280,8 +281,31 @@ async def send_invite_to_user(message: types.Message, state: FSMContext, bot: Bo
         await message.answer(f"Не удалось отправить сообщение пользователю: {e}")
 
 
-
 @router.callback_query(lambda callback: callback.data == "button_cancel", StateFilter(AddUser.tg_id))
 async def cancel_handler(callback: types.CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.edit_text("Действие отменено")
+
+
+@router.callback_query(lambda callback: callback.data == "get_excel_users")
+async def get_excel_users_data(callback: types.CallbackQuery):
+    """Получение списка всех пользователей"""
+    wait_msg = await callback.message.edit_text("⏳ Подождите, как только таблица сформируется, "
+                                                "файл будет отправлен в чат")
+
+    users = await AsyncOrm.get_all_users_with_active_subscription()
+
+    # Generate excel file
+    generate_excel_file(users)
+
+    try:
+        document = FSInputFile('users/users.xlsx')
+        await callback.message.answer_document(document)
+        await wait_msg.delete()
+
+    except Exception as e:
+        await callback.message.answer(f"Ошибка при формировании excel файла: {e}")
+
+
+
+
