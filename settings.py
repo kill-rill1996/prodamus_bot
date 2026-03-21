@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     trial_period: int = 3
     trial_discount: int = 889
 
+    proxy_ip: str
+    proxy_port: int
+    proxy_protocol: str
+
     db: Database = Database()
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
