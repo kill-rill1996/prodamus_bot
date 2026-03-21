@@ -9,11 +9,20 @@ from settings import settings
 from logger import logger
 
 
+PROXIES = {
+    "http": f"socks5h://{settings.proxy_ip}:{settings.proxy_port}",
+    "https": f"socks5h://{settings.proxy_ip}:{settings.proxy_port}",
+}
+
+# Создаём сессию один раз
+session = requests.Session()
+session.proxies.update(PROXIES)
+
 async def generate_invite_link(user: User) -> str:
     """Создание ссылка для вступления в канал"""
     expire_date = datetime.now(tz=pytz.timezone('Europe/Moscow')) + timedelta(days=1)
     name = user.username if user.username else user.firstname
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "createChatInviteLink"),
         data={
             "chat_id": settings.channel_id,
@@ -36,7 +45,7 @@ async def send_invite_link_to_user(chat_id: int, link: str, expire_date: datetim
            "Ваша ссылка на вступление в закрытый канал\n\n" \
            "↓↓↓"
 
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={'chat_id': chat_id,
               'text': text,
@@ -58,7 +67,7 @@ async def send_error_message_to_user(chat_id: int) -> None:
            "Возможно у тебя не хватает денег на балансе, либо карта больше не действительна. Попробуй оформить подписку заново.\n\n" \
            "Если хочешь продолжать следить за питанием с нами вместе, то жду тебя обратно в канал 🫰"
 
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={
             'chat_id': chat_id,
@@ -79,7 +88,7 @@ async def buy_subscription_error(chat_id: int) -> None:
            "Возможно у вас не хватает средств на балансе, либо ваша карта больше не действительна.\n\n" \
            "Попробуйте оформить подписку заново"
 
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={'chat_id': chat_id,
               'parse_mode': "HTML",
@@ -109,7 +118,7 @@ async def send_auto_pay_error_message_to_user(user: UserRel) -> None:
           f"Чтобы избежать отключения из канала, пополните баланс до {date_next_payment_phare} (МСК)"
 
     # сообщение клиенту
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={
             'chat_id': user.tg_id,
@@ -119,7 +128,7 @@ async def send_auto_pay_error_message_to_user(user: UserRel) -> None:
     ).json()
 
     # сообщение админу
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={
             # TODO тестовый chat_id
@@ -133,7 +142,7 @@ async def send_auto_pay_error_message_to_user(user: UserRel) -> None:
 
 async def send_success_message_to_user(chat_id: int, expire_date: datetime) -> None:
     """Оповещение об успешной оплате"""
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
         data={'chat_id': chat_id,
               'parse_mode': "HTML",
@@ -146,7 +155,7 @@ async def delete_user_from_channel(channel_id: int, user_id: int) -> None:
     """Кик пользователя из канала"""
     logger.info(f"Идет удаление пользователя из канала")
 
-    response = requests.post(
+    response = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "banChatMember"),
         data={
             'chat_id': channel_id,
@@ -154,7 +163,7 @@ async def delete_user_from_channel(channel_id: int, user_id: int) -> None:
         }
     ).json()
 
-    _ = requests.post(
+    _ = session.post(
         url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "unbanChatMember"),
         data={
             'chat_id': channel_id,
@@ -170,7 +179,7 @@ async def send_error_message_to_admin(buy_type: str, response) -> None:
     msg = f"⛔️ Ошибка проверки подписи при оплате подписки\nТип покупки: <b>{buy_type}</b>\n\nRESPONSE\n{response}"
 
     for chat_id in [420551454, 714371204]:
-        response = requests.post(
+        response = session.post(
             url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
             data={'chat_id': chat_id,
                   'parse_mode': "HTML",
