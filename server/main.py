@@ -99,12 +99,16 @@ async def buy_subscription(request: Request):
         # генерируем ссылку на вступление в группу
         invite_link = await generate_invite_link(user)
 
-        await send_invite_link_to_user(
-            int(user.tg_id),
-            invite_link,
-            expire_date=response.date_next_payment,
-            is_trial=response.is_trial
-        )
+        try:
+            await send_invite_link_to_user(
+                int(user.tg_id),
+                invite_link,
+                expire_date=response.date_next_payment,
+                is_trial=response.is_trial
+            )
+        except Exception as e:
+            logger.error(f"Ошибка при отправке сообщения пользователю {response.tg_id} после "
+                         f"успешной покупки подписки (is_trial={response.is_trial}): {e}")
 
         # учет операции
         await AsyncOrm.add_operation(user.tg_id, "BUY_SUB", response.date_last_payment)
@@ -160,7 +164,11 @@ async def auto_pay_subscription(request: Request):
             profile_id=response.profile_id,
             trial_used=True
         )
-        await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
+        try:
+            await send_success_message_to_user(int(response.tg_id), response.date_next_payment)
+        except Exception as e:
+            logger.error(f"Ошибка при отправке сообщения пользователю {response.tg_id} после "
+                         f"успешного продления: {e}")
 
         # учет операции
         await AsyncOrm.add_operation(user.tg_id, "AUTO_PAY", response.date_last_payment)
