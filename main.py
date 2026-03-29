@@ -42,9 +42,11 @@ async def set_description(bot: io.Bot):
 async def start_bot() -> None:
     """Запуск бота"""
     # Proxy
-    session = AiohttpSession(proxy=f"{settings.proxy_protocol}://{settings.proxy_ip}:{settings.proxy_port}")
+    # session = AiohttpSession(proxy=f"{settings.proxy_protocol}://{settings.proxy_ip}:{settings.proxy_port}")
+    # bot = io.Bot(settings.bot_token, session=session, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
-    bot = io.Bot(settings.bot_token, session=session, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = io.Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
     await set_commands(bot)
     await set_description(bot)
 
