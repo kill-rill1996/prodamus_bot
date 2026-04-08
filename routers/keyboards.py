@@ -170,3 +170,13 @@ def cancel_keyboard() -> InlineKeyboardBuilder:
     keyboard = InlineKeyboardBuilder()
     keyboard.row(InlineKeyboardButton(text="❌ Отмена", callback_data="button_cancel"))
     return keyboard
+
+
+# Разовая акция для отправки конкретной рассылки
+def get_access_keyboard() -> InlineKeyboardBuilder:
+    """Клавиатура продления/отмены подписки"""
+    keyboard = InlineKeyboardBuilder()
+    keyboard.row(InlineKeyboardButton(text="Получить доступ", callback_data=f"subscribe"))
+    keyboard.adjust(1)
+
+    return keyboard

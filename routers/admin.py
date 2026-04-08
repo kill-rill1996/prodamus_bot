@@ -8,7 +8,7 @@ from aiogram.utils import keyboard
 from aiogram.utils.media_group import MediaGroupBuilder
 
 from middlewares.media import MediaMiddleware
-from routers.keyboards import cancel_keyboard, invite_to_channel_keyboard
+from routers.keyboards import cancel_keyboard, invite_to_channel_keyboard, get_access_keyboard
 from settings import settings
 from routers import keyboards as kb
 from routers.fsm_states import SendMessagesFSM, AddUser
@@ -178,6 +178,12 @@ async def get_media_for_users_and_send_messages(message: types.Message | types.C
 
                 try:
                     await bot.send_media_group(tg_id, media_group.build())
+                    # TODO убрать если не нужна клавиатура к альбому отдельным сообщением
+                    await bot.send_message(
+                        tg_id,
+                        "<b>Приложение Sheva Nutrition</b>\n\n"
+                        "Подписываешься на канал, там будет на него ссылка 👇",
+                        reply_markup=get_access_keyboard().as_markup())
                     success_message_counter += 1
 
                 except Exception as e:
