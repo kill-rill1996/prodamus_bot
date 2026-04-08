@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     invite_link: str
     trial_period: int = 3
     trial_discount: int = 889
+    exclude_users_for_notify: list
 
     proxy_ip: str
     proxy_port: int

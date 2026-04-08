@@ -139,46 +139,49 @@ async def get_media_for_users_and_send_messages(message: types.Message | types.C
     success_message_counter = 0
     for tg_id in users_ids:
 
-        # если не было передано медиа
-        if type(message) == types.CallbackQuery:
+        # Не отправляем пользователям в списке исключения
+        if not tg_id in settings.exclude_users_for_notify:
 
-            # только текст
-            if msg:
-                await bot.send_message(tg_id, msg)
-                success_message_counter += 1
+            # если не было передано медиа
+            if type(message) == types.CallbackQuery:
 
-            # нет текста и медиа
-            else:
-                await wait_msg.edit_text("Невозможно отправить пустое сообщение")
-                return
+                # только текст
+                if msg:
+                    await bot.send_message(tg_id, msg)
+                    success_message_counter += 1
 
-        else:
-            # если в медиа передали некорректные файлы
-            if not album:
-                await wait_msg.edit_text("Переданы некорректные типы файлов")
-                return
-
-            # подготовка альбома
-            media_group = MediaGroupBuilder(caption=msg)
-
-            for obj in album:
-                if obj.photo:
-                    file_id = obj.photo[-1].file_id
-                    media_group.add_photo(type="photo", media=file_id)
-                elif obj.video:
-                    obj_dict = obj.dict()
-                    file_id = obj_dict[obj.content_type]['file_id']
-                    media_group.add_video(type="video", media=file_id)
+                # нет текста и медиа
                 else:
-                    await message.answer("Переданы некорректные типы файлов")
+                    await wait_msg.edit_text("Невозможно отправить пустое сообщение")
                     return
 
-            try:
-                await bot.send_media_group(tg_id, media_group.build())
-                success_message_counter += 1
+            else:
+                # если в медиа передали некорректные файлы
+                if not album:
+                    await wait_msg.edit_text("Переданы некорректные типы файлов")
+                    return
 
-            except Exception as e:
-                print(f"Не удалось отправить сообщение пользователю при оповещении {user_group} {tg_id}: {e}")
+                # подготовка альбома
+                media_group = MediaGroupBuilder(caption=msg)
+
+                for obj in album:
+                    if obj.photo:
+                        file_id = obj.photo[-1].file_id
+                        media_group.add_photo(type="photo", media=file_id)
+                    elif obj.video:
+                        obj_dict = obj.dict()
+                        file_id = obj_dict[obj.content_type]['file_id']
+                        media_group.add_video(type="video", media=file_id)
+                    else:
+                        await message.answer("Переданы некорректные типы файлов")
+                        return
+
+                try:
+                    await bot.send_media_group(tg_id, media_group.build())
+                    success_message_counter += 1
+
+                except Exception as e:
+                    print(f"Не удалось отправить сообщение пользователю при оповещении {user_group} {tg_id}: {e}")
 
     await wait_msg.edit_text(f"✅ Оповещено пользователей: <b>{success_message_counter}</b>")
 
