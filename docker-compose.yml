@@ -1,33 +1,33 @@
 services:
-  bot:
-    container_name: "sheva-bot"
+  sheva-prodamus-tg-bot:
+    container_name: "sheva-prodamus-tg-bot"
     build: ./
     command: sh -c "python main.py"
     env_file:
       - .env
     depends_on:
-      - postgresdb
+      - sheva-prodamus-postgresdb
 
-  nginx:
-    container_name: "nginx"
+  sheva-prodamus-nginx:
+    container_name: "sheva-prodamus-nginx"
     build: ./nginx
     restart: on-failure
     depends_on:
-      - api
+      - sheva-prodamus-api
     ports:
       - 80:80
 
-  api:
-    container_name: "api"
+  sheva-prodamus-api:
+    container_name: "sheva-prodamus-api"
     build: ./server
     depends_on:
-      - postgresdb
+      - sheva-prodamus-postgresdb
     ports:
       - 8000:8000
     volumes:
       - ./logs:/app/logs/
 
-  postgresdb:
+  sheva-prodamus-postgresdb:
     image: postgres:13.1
     restart: always
     volumes:
@@ -36,7 +36,7 @@ services:
     env_file:
       - ./.env
     ports:
-      - 5432:5432
+      - 5433:5433
     command: postgres -c hba_file=/etc/postgresql/pg_hba.conf
 
 volumes:
