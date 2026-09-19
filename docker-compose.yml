@@ -15,7 +15,7 @@ services:
     depends_on:
       - sheva-prodamus-api
     ports:
-      - 80:80
+      - 8081:80
 
   sheva-prodamus-api:
     container_name: "sheva-prodamus-api"
