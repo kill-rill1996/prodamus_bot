@@ -341,3 +341,5 @@ errors.txt
 
 /backup_crontab_scripts
 /database_backups
+
+*logs
