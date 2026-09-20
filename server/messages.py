@@ -39,6 +39,7 @@ async def generate_invite_link(user: User) -> str:
         },
         timeout=(10, 45)
     )
+    logger.info(f"Response: {response}")
     invite_link = response.json()["result"]["invite_link"]
 
     return invite_link
