@@ -7,6 +7,8 @@ services:
       - .env
     depends_on:
       - sheva-prodamus-postgresdb
+    environment:
+        TELEGRAM_API_BASE: "http://5.129.230.89:8098"
 
   sheva-prodamus-nginx:
     container_name: "sheva-prodamus-nginx"
@@ -24,6 +26,8 @@ services:
       - sheva-prodamus-postgresdb
     ports:
       - 8000:8000
+    environment:
+      TELEGRAM_API_BASE: "http://5.129.230.89:8098"
     volumes:
       - ./logs:/app/logs/
 

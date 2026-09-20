@@ -1,9 +1,11 @@
 import asyncio
+import os
 from datetime import datetime
 
 import aiogram as io
 from aiogram.client.default import DefaultBotProperties
 from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand, BotCommandScopeDefault
@@ -45,7 +47,20 @@ async def start_bot() -> None:
     # session = AiohttpSession(proxy=f"{settings.proxy_protocol}://{settings.proxy_ip}:{settings.proxy_port}")
     # bot = io.Bot(settings.bot_token, session=session, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
-    bot = io.Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    # Default run
+    # bot = io.Bot(settings.bot_token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
+    api_base = os.environ["TELEGRAM_API_BASE"].rstrip("/")
+
+    session = AiohttpSession(
+        api=TelegramAPIServer.from_base(api_base)
+    )
+
+    bot = io.Bot(
+        settings.bot_token,
+        session=session,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
 
     await set_commands(bot)
     await set_description(bot)
@@ -69,7 +84,10 @@ async def start_bot() -> None:
     dispatcher.include_routers(users.router, admin.router, admin.media_router)
     # await init_models()
 
-    await dispatcher.start_polling(bot)
+    # Default polling
+    # await dispatcher.start_polling(bot)
+
+    await dispatcher.start_polling(bot, polling_timeout=30)
 
 
 async def init_models():
