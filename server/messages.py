@@ -1,3 +1,4 @@
+import os
 import json
 from datetime import datetime, timedelta
 
@@ -8,6 +9,11 @@ from schemas import User, UserRel
 from settings import settings
 from logger import logger
 
+
+TELEGRAM_API_BASE = os.environ["TELEGRAM_API_BASE"].rstrip("/")
+
+def telegram_url(method: str) -> str:
+    return f"{TELEGRAM_API_BASE}/bot{settings.bot_token}/{method}"
 
 # PROXIES = {
 #     "http": f"socks5h://{settings.proxy_ip}:{settings.proxy_port}",
@@ -23,13 +29,15 @@ async def generate_invite_link(user: User) -> str:
     expire_date = datetime.now(tz=pytz.timezone('Europe/Moscow')) + timedelta(days=1)
     name = user.username if user.username else user.firstname
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "createChatInviteLink"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "createChatInviteLink"),
+        url=telegram_url("createChatInviteLink"),
         data={
             "chat_id": settings.channel_id,
             "name": name,
             "expire_date": int(expire_date.timestamp()),
             "member_limit": 1,
-        }
+        },
+        timeout=(10, 45)
     )
     invite_link = response.json()["result"]["invite_link"]
 
@@ -46,7 +54,8 @@ async def send_invite_link_to_user(chat_id: int, link: str, expire_date: datetim
            "↓↓↓"
 
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        url=telegram_url("sendMessage"),
         data={'chat_id': chat_id,
               'text': text,
               'parse_mode': "HTML",
@@ -57,7 +66,8 @@ async def send_invite_link_to_user(chat_id: int, link: str, expire_date: datetim
 
                   ]},
                   separators=(',', ':'))
-              }
+              },
+        timeout=(10, 45)
     ).json()
 
 
@@ -68,7 +78,8 @@ async def send_error_message_to_user(chat_id: int) -> None:
            "Если хочешь продолжать следить за питанием с нами вместе, то жду тебя обратно в канал 🫰"
 
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        url=telegram_url("sendMessage"),
         data={
             'chat_id': chat_id,
             'parse_mode': "HTML",
@@ -78,7 +89,8 @@ async def send_error_message_to_user(chat_id: int) -> None:
                     [{"text": "Оформить подписку", "callback_data": "subscribe"}]
                 ]},
                 separators=(',', ':'))
-              }
+              },
+        timeout=(10, 45)
     ).json()
 
 
@@ -89,7 +101,8 @@ async def buy_subscription_error(chat_id: int) -> None:
            "Попробуйте оформить подписку заново"
 
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        url=telegram_url("sendMessage"),
         data={'chat_id': chat_id,
               'parse_mode': "HTML",
               'text': text,
@@ -98,7 +111,8 @@ async def buy_subscription_error(chat_id: int) -> None:
                       [{"text": "Оформить подписку", "callback_data": "subscribe"}]
                   ]},
                   separators=(',', ':'))
-              }
+              },
+        timeout=(10, 45)
     ).json()
 
 
@@ -119,35 +133,41 @@ async def send_auto_pay_error_message_to_user(user: UserRel) -> None:
 
     # сообщение клиенту
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        url=telegram_url("sendMessage"),
         data={
             'chat_id': user.tg_id,
             'parse_mode': "HTML",
             'text': msg_for_client,
-        }
+        },
+        timeout=(10, 45)
     ).json()
 
     # сообщение админу
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        url=telegram_url("sendMessage"),
         data={
             # TODO тестовый chat_id
             # 'chat_id': user.tg_id,
             'chat_id': settings.admins[0],
             'parse_mode': "HTML",
             'text': msg_for_admin,
-        }
+        },
+        timeout=(10, 45)
     ).json()
 
 
 async def send_success_message_to_user(chat_id: int, expire_date: datetime) -> None:
     """Оповещение об успешной оплате"""
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        url=telegram_url("sendMessage"),
         data={'chat_id': chat_id,
               'parse_mode': "HTML",
               'text': f'Ваша подписка успешно продлена до <b>{expire_date.date().strftime("%d.%m.%Y")}</b>',
-              }
+              },
+        timeout=(10, 45)
     ).json()
 
 
@@ -156,19 +176,23 @@ async def delete_user_from_channel(channel_id: int, user_id: int) -> None:
     logger.info(f"Идет удаление пользователя из канала")
 
     response = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "banChatMember"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "banChatMember"),
+        url=telegram_url("banChatMember"),
         data={
             'chat_id': channel_id,
             'user_id': user_id,
-        }
+        },
+        timeout=(10, 45)
     ).json()
 
     _ = requests.post(
-        url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "unbanChatMember"),
+        # url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "unbanChatMember"),
+        url=telegram_url("unbanChatMember"),
         data={
             'chat_id': channel_id,
             'user_id': user_id,
-        }
+        },
+        timeout=(10, 45)
     ).json()
 
     logger.info(f"Пользователь tg_id {user_id} удален из канала")
@@ -179,10 +203,11 @@ async def send_error_message_to_admin(buy_type: str, response) -> None:
     msg = f"⛔️ Ошибка проверки подписи при оплате подписки\nТип покупки: <b>{buy_type}</b>\n\nRESPONSE\n{response}"
 
     for chat_id in [420551454, 714371204]:
-        response = requests.post(
-            url='https://api.telegram.org/bot{0}/{1}'.format(settings.bot_token, "sendMessage"),
+        requests.post(
+            url=telegram_url("sendMessage"),
             data={'chat_id': chat_id,
                   'parse_mode': "HTML",
                   'text': msg,
-                  }
-        ).json()
+                  },
+            timeout=(10, 45)
+        )
