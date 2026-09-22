@@ -1,8 +1,10 @@
 import os
+import hmac
+import re
 from datetime import datetime
 from collections.abc import MutableMapping
 
-from fastapi import Request
+from fastapi import Request, HTTPException
 from prodamuspy import ProdamusPy
 from logger import logger
 
@@ -43,26 +45,13 @@ async def verify(request):
 async def verify_dict(body: dict, str_sign: str) -> bool:
     """Проверка подписи с помощью сторонней библиотеки для подготовки тела запроса"""
     request_sign = sign(body, settings.pay_token)
-    return str_sign == request_sign
+    return hmac.compare_digest(str_sign.lower(), request_sign)
 
 
 async def get_body_params_pay_success(request: Request) -> ResponseResultPayment:
     """Для приема body у покупки подписки"""
-    prodamus = ProdamusPy(settings.pay_token)
-
-    # Парсим тело запроса в нормальный формат
-    body = await request.body()
-    bodyDict = prodamus.parse(body.decode())
-
-    # Проверяем подпись
-    try:
-        signIsGood = await verify_dict(bodyDict, request.headers["sign"])
-        logger.info(f"Проверка подписи с помощью prodamus.parse, результат sign verify: {signIsGood}")
-    except Exception as e:
-        logger.error(f"Ошибка при обработке подписи с помощью prodamus.parse: {e}")
-        signIsGood = False
-
-    # signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
+    bodyDict = await verified_payload(request, "purchase")
+    signIsGood = True
 
     # проверяем подписка с демо периодом или без
     is_trial: bool = True if bodyDict.get("subscription_demo_period") else False
@@ -83,10 +72,7 @@ async def get_body_params_pay_success(request: Request) -> ResponseResultPayment
 
 async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
     """Для приема body у автопродления подписки"""
-    prodamus = ProdamusPy(settings.pay_token)
-
-    body = await request.body()
-    bodyDict = prodamus.parse(body.decode())
+    bodyDict = await verified_payload(request, "auto")
 
     # логирование request body при ошибке
     if "error_code" in bodyDict["subscription"]:
@@ -100,7 +86,7 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
 
         logger.error(log_message)
 
-    signIsGood = prodamus.verify(bodyDict, request.headers["sign"])
+    signIsGood = True
 
     result = ResponseResultAutoPay(
         tg_id=bodyDict["order_num"],
@@ -146,3 +132,36 @@ async def get_body_params_auto_pay(request: Request) -> ResponseResultAutoPay:
 
     return result
 
+
+
+async def verified_payload(request: Request, mode: str) -> dict:
+    """Authenticate before parsing business fields or performing any side effects.
+
+    Preserve the two signing formats already used by this deployed integration.
+    The purchase signer escapes slashes; the existing recurring-payment signer
+    does not. Never fall back to accepting an invalid signature.
+    """
+    cached = getattr(request.state, "verified_prodamus_payload", None)
+    if cached is not None:
+        return cached
+    signature = request.headers.get("sign", "")
+    if not re.fullmatch(r"[0-9a-fA-F]{64}", signature):
+        raise HTTPException(status_code=403, detail="Invalid signature")
+    body = await request.body()
+    if len(body) > 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Payload too large")
+    try:
+        prodamus = ProdamusPy(settings.pay_token)
+        payload = prodamus.parse(body.decode("utf-8"))
+        if mode == "purchase":
+            valid = await verify_dict(payload, signature)
+        else:
+            valid = hmac.compare_digest(prodamus.sign(payload), signature.lower())
+    except (ValueError, TypeError, UnicodeError, IndexError, RecursionError):
+        raise HTTPException(status_code=400, detail="Invalid payload") from None
+    if not valid:
+        logger.warning("Rejected Prodamus webhook: invalid signature")
+        raise HTTPException(status_code=403, detail="Invalid signature")
+    logger.info("Verified Prodamus webhook ({})", mode)
+    request.state.verified_prodamus_payload = payload
+    return payload

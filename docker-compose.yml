@@ -22,10 +22,11 @@ services:
   sheva-prodamus-api:
     container_name: "sheva-prodamus-api"
     build: ./server
+    image: sheva-prodamus-api:20260922-security
     depends_on:
       - sheva-prodamus-postgresdb
     ports:
-      - 8000:8000
+      - "127.0.0.1:8000:8000"
     environment:
       TELEGRAM_API_BASE: "http://5.129.230.89:8098"
     volumes:
